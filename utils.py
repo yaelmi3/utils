@@ -1,10 +1,10 @@
+import pickle
 import sys
-
 import arrow
 import baker
 import requests
 from backslash import Backslash
-from logbook import Logger,StreamHandler
+from logbook import Logger, StreamHandler
 from urlobject import URLObject
 
 StreamHandler(sys.stdout).push_application()
@@ -14,9 +14,8 @@ BACKSLASH_URL = "https://backslash.infinidat.com/"
 
 
 class InternalTest(object):
-    def __init__(self, backslash_test, exception_info=None):
-        self.test_link = f'<a href="{backslash_test.ui_url}"' \
-                         f'">{backslash_test.logical_id}</a>'
+    def __init__(self, backslash_test, exception_info=None, to_cache=True):
+        self.test_link = f'<a href="{backslash_test.ui_url}">{backslash_test.logical_id}</a>'
         self.parameters =backslash_test._data['parameters']
         self.status = backslash_test._data['status']
         self.error = exception_info._data['exception_type'] if exception_info else \
@@ -26,6 +25,12 @@ class InternalTest(object):
         self.duration = arrow.get(backslash_test._data['duration']).format('HH:mm:ss')
         self.comment = backslash_test._data["last_comment"]['comment'] if backslash_test._data[
             'num_comments'] else ''
+        if to_cache:
+            self.update_cache(backslash_test)
+
+    def update_cache(self, backslash_test):
+        import ipdb; ipdb.set_trace()
+        pickled_test = pickle.dumps(backslash_test)
 
 
 def send_command_to_host(host, command, to_file=""):
@@ -74,10 +79,10 @@ def generate_html_report(test_name, exception_type=None):
                 ' </style> <table class="tg">'
     cell = '<th class="tg-yw4l">{}</th>'
     tests = get_failed_tests(test_name, exception_type)
-    html_text += f"<tr>{''.join([cell.format(value)for value in tests[0].__dict__.keys()])}</tr>"
+    html_text += f"<tr>{''.join([cell.format(value) for value in tests[0].__dict__.keys()])}</tr>"
     for test in tests:
         html_text += "<tr>"
-        html_text += ''.join([cell.format(value)for value in test.__dict__.values()])
+        html_text += ''.join([cell.format(value) for value in test.__dict__.values()])
         html_text += "</tr>"
     html_text += "</table>"
     file_path = f"{test_name}_{exception_type}_.html"

@@ -6,3 +6,4 @@ urlobject
 flask
 rpyc
 redis
+arrow
