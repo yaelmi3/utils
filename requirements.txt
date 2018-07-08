@@ -4,6 +4,6 @@ backslash
 logbook
 urlobject
 flask
-rpyc
+rpyc==3.4.4
 redis
 arrow
