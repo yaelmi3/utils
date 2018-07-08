@@ -14,7 +14,7 @@ class CacheServer(rpyc.Service):
         self.r_server = redis.Redis()
 
     def on_connect(self):
-        log.info('Connection accepted')
+        log.info(f'{self}')
 
 
 if __name__ == "__main__":
