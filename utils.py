@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 from itertools import chain
 
 import arrow
@@ -79,7 +81,7 @@ def query_tests_by_name(test_name, show_successful=False):
     3. Return list of converted test objects
     :type test_name: str
     :type show_successful: bool
-    :rtype: list(backslash.session.)
+    :rtype: list(backslash.session.Session)
     """
     query = config.test_query_template.format(test_name, str(show_successful).lower())
     log.info(f"Executing query: {query}")
@@ -111,25 +113,32 @@ def get_test(meta_test):
 
 
 @baker.command
-def generate_html_report(test_name, exception_type=None):
+def generate_html_report(test_name, exception_type=None, directory=None):
     """
     1. Get all failed tests objects
     2. Create html table
-    3. Save html to file
+    3. Save html to file. if directory specified, file will be created in dir, otherwise tempdir
+        is used by default
     :type test_name: str
     :type exception_type: str
+    :type directory: str
     """
-    import ipdb; ipdb.set_trace()
     tests = get_failed_tests(test_name, exception_type)
     html_text = create_tests_table(tests)
-    file_path = f"{test_name}_{exception_type}.html"
+    dest_dir = directory if directory else tempfile.gettempdir()
+    file_path = os.path.join(dest_dir, f"{test_name}_{exception_type}_{arrow.now().timestamp}.html")
     save_to_file(file_path, html_text)
 
 
 def save_to_file(file_path, file_content):
+    """
+    Save given data to specified path and notify about file creation
+    :type file_path: str
+    :type file_content: str
+    """
     with open(file_path, 'w') as html_file:
         html_file.write(file_content)
-        log.notice(file_path)
+        log.notice(f"File was created at: {file_path}")
 
 
 def create_tests_table(tests):
@@ -210,9 +219,17 @@ def query_errors(test):
     log.info(f"Test {test.id} doesn't contain errors'")
 
 
-def get_latest_sessions(days_shift=1):
+def get_latest_sessions(days_shift=1, show_successful=False):
+    """
+    1. Generate timestamp to be used in the query and add it to the query
+    2. Execute query and in case result is ok, get the sessions from json
+    3. While the query uses timestamp, some of the sessions are still older, so we filter them out
+    :type days_shift: int
+    :type show_successful: bool
+    :rtype: list(backslash.session.Session)
+    """
     timestamp = arrow.utcnow().shift(days=-days_shift).timestamp
-    query = config.session_query_template.format(timestamp)
+    query = config.session_query_template.format(timestamp, str(show_successful).lower())
     log.info(f"Executing query {query}")
     result = requests.get(query)
     if result.ok:
@@ -221,8 +238,20 @@ def get_latest_sessions(days_shift=1):
 
 
 def obtain_all_test_errors():
+    """
+    1. Get latest sessions
+    2. get all tests in the list
+    3. filter out successful tests and test that were executed using local auto code
+    4. Update tests with errors
+    """
 
     def update_errors():
+        """
+        1. iterate on test errors
+        2. Add tests to list, if the error already exists in the dict, or create a new key in the
+            dict and start a new test list
+        3. In case exception type is missing from the error, the error would be classified as Misc
+        """
         for error in query_errors(test):
             if error:
                 exception_type = error._data["exception_type"]
@@ -249,22 +278,36 @@ def obtain_all_test_errors():
 
 
 def test_matches_requirements(test):
+    """
+    Return True if test is failed and wasn't executed from local branch
+    :type test: backslash.test.Test
+    :rtype: bool
+    """
     return test.status in ["FAILURE", "ERROR"] and not test._data['scm_dirty'] and (
                 not test._data['scm_local_branch'] or "/" not in test._data['scm_local_branch'])
 
 
 def get_session_tests(session):
+    """
+    1. Check if cache contain the list of session tests
+    2. If found in cache, return tests
+    3. If not found in cache, query tests from session and convert them to objects
+    4. update session with tests in cache, to be kept for 2 days
+    5. update tests separately in cache as well
+    :type session: backslash.session.Session
+    :rtype: list(backslash.test.Test)
+    """
     session_key = f"session_{session.id}"
     log.info(f"Looking for session {session.id} in cache")
     tests = get_from_cache(session_key)
     if tests:
         log.info(f"Found session {session.id} in cache")
-        return tests
-    log.info(f"Session {session.id} wasn't found in cache")
-    tests = [test for test in session.query_tests()]
-    update_cache(session_key, tests, days_to_keep=2)
-    for test in tests:
-        update_cache(test.id, test)
+    else:
+        log.info(f"Session {session.id} wasn't found in cache")
+        tests = [test for test in session.query_tests()]
+        update_cache(session_key, tests, days_to_keep=2)
+        for test in tests:
+            update_cache(test.id, test)
     return tests
 
 
