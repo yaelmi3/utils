@@ -11,7 +11,7 @@ from logbook import Logger, StreamHandler
 from urlobject import URLObject
 
 import config
-from cache_client import update_cache, get_from_cache
+from cache_client import add_to_cache, get_from_cache, update_cache
 
 StreamHandler(sys.stdout).push_application()
 log = Logger(__name__)
@@ -89,26 +89,26 @@ def query_tests_by_name(test_name, show_successful=False):
     if result.ok:
         meta_tests = result.json().get("tests")
         log.info(f"{len(meta_tests)} tests were found. Converting them to test objects")
-        return [get_test(meta_test) for meta_test in meta_tests]
+        return [get_test(meta_test["id"]) for meta_test in meta_tests]
 
 
-def get_test(meta_test):
+def get_test(test_id):
     """
     1. Check if test is in cache
     2. If test was found in cache return it
     3. If test wasnt found in cache, get the test from backslash
     4. Add test to cache
-    :type meta_test: dict
+    :type test_id: int
     :rtype: backslash.test.Test
     """
-    log.info(f"Looking for test {meta_test['id']} in cache")
-    cached_test = get_from_cache(meta_test["id"])
+    log.info(f"Looking for test {test_id} in cache")
+    cached_test = get_from_cache(test_id)
     if cached_test:
         log.info("Test was found in cache")
         return cached_test
-    log.info(f"Could not find test {meta_test['id']} in cache, obtaining from backslash")
-    backslash_test = locate_test(meta_test['id'])
-    update_cache(meta_test["id"], backslash_test)
+    log.info(f"Could not find test {test_id} in cache, obtaining from backslash")
+    backslash_test = locate_test(test_id)
+    add_to_cache(test_id, backslash_test)
     return backslash_test
 
 
@@ -125,19 +125,21 @@ def generate_html_report(test_name, exception_type=None, directory=None):
     """
     tests = get_failed_tests(test_name, exception_type)
     html_text = create_tests_table(tests)
-    dest_dir = directory if directory else tempfile.gettempdir()
-    file_path = os.path.join(dest_dir, f"{test_name}_{exception_type}_{arrow.now().timestamp}.html")
-    save_to_file(file_path, html_text)
+    file_name = f"{test_name}_{exception_type}_{arrow.now().timestamp}.html"
+    save_to_file(file_name, html_text, directory)
 
 
-def save_to_file(file_path, file_content):
+def save_to_file(file_name, file_content, directory=None):
     """
     Save given data to specified path and notify about file creation
-    :type file_path: str
+    :type file_name: str
     :type file_content: str
+    :type directory
     """
-    with open(file_path, 'w') as html_file:
-        html_file.write(file_content)
+    dest_dir = directory if directory else tempfile.gettempdir()
+    file_path = os.path.join(dest_dir, file_name)
+    with open(file_path, 'w') as file_handle:
+        file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")
 
 
@@ -211,12 +213,41 @@ def query_errors(test):
         errors = get_from_cache(test_error_key)
         if errors:
             log.info(f"Found errors for {test.id}")
-        else:
-            log.info(f"Could not find errors for {test.id}")
-            errors = [error for error in test.query_errors()]
-            update_cache(test_error_key, errors)
+        log.info(f"Could not find errors for {test.id}")
+        errors = [error for error in test.query_errors()]
+        add_errors_to_cache(errors, test)
+        add_to_cache(test_error_key, errors)
         return errors
     log.info(f"Test {test.id} doesn't contain errors'")
+
+
+def add_errors_to_cache(errors, test):
+    """
+    Update list of tests related to the specific error in cache
+    :type errors: list(backslash.error.Error)
+    :type test: backslash.test.Test
+    """
+    for error in errors:
+        exception_info = _get_exception_type(error)
+        update_cache(exception_info, test.id)
+
+
+@baker.command
+def find_test_by_error(exception_type, directory=None):
+    """
+    1. Look for cache for entry with the specified exception type
+    2. If entry found:
+        2.1 Iterate through test id and obtain their test objects
+
+    :type exception_type: str
+    :type directory: str
+    """
+    test_ids = get_from_cache(exception_type)
+    if test_ids:
+        tests = [InternalTest(get_test(test_id)) for test_id in test_ids]
+        html_text = f"<b>{exception_type} - {len(test_ids)} tests</b><br>"
+        html_text += create_tests_table(tests)
+        save_to_file(f"{exception_type}_{arrow.now().timestamp}.html", html_text, directory)
 
 
 def get_latest_sessions(days_shift=1, show_successful=False):
@@ -237,6 +268,18 @@ def get_latest_sessions(days_shift=1, show_successful=False):
                 session['start_time'] > timestamp and session['status'] not in ["SUCCESS"]]
 
 
+def _get_exception_type(error):
+    """
+    return exception type if there's one, else return misc
+    :type error: backslash.error.Error
+    :type: str
+    """
+    exception_type = error._data["exception_type"]
+    if not exception_type:
+        exception_type = "Misc"
+    return exception_type
+
+
 def obtain_all_test_errors():
     """
     1. Get latest sessions
@@ -254,9 +297,7 @@ def obtain_all_test_errors():
         """
         for error in query_errors(test):
             if error:
-                exception_type = error._data["exception_type"]
-                if not exception_type:
-                    exception_type = "Misc"
+                exception_type = _get_exception_type(error)
                 if exception_type in test_and_errors and test not in test_and_errors[exception_type]:
                     test_and_errors[exception_type].append(test)
                 else:
@@ -305,9 +346,9 @@ def get_session_tests(session):
     else:
         log.info(f"Session {session.id} wasn't found in cache")
         tests = [test for test in session.query_tests()]
-        update_cache(session_key, tests, days_to_keep=2)
+        add_to_cache(session_key, tests, days_to_keep=2)
         for test in tests:
-            update_cache(test.id, test)
+            add_to_cache(test.id, test)
     return tests
 
 
