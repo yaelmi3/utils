@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 backslash_url = "https://backslash.infinidat.com/"
 
 session_query_template = 'https://backslash.infinidat.com/rest/sessions?page_size' \
@@ -17,3 +19,5 @@ table_style = '<style type="text/css"> .tg  {border-collapse:collapse;border-spa
 cell_style = '<th class="tg-yw4l">{}</th>'
 
 table_footer = "</table>"
+
+cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy", 6378)
