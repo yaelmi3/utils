@@ -113,7 +113,7 @@ def get_test(test_id):
 
 
 @baker.command
-def generate_html_report(test_name, exception_type=None, directory=None):
+def get_failed_tests_by_name(test_name, exception_type=None, directory=None):
     """
     1. Get all failed tests objects
     2. Create html table
@@ -280,6 +280,7 @@ def _get_exception_type(error):
     return exception_type
 
 
+@baker.command
 def obtain_all_test_errors():
     """
     1. Get latest sessions
