@@ -44,7 +44,7 @@ def update_cache(key_name, new_data):
             return
     else:
         entry = [new_data]
-        add_to_cache(key_name, entry)
+    add_to_cache(key_name, entry)
 
 
 def get_from_cache(key_name):

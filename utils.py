@@ -213,10 +213,11 @@ def query_errors(test):
         errors = get_from_cache(test_error_key)
         if errors:
             log.info(f"Found errors for {test.id}")
-        log.info(f"Could not find errors for {test.id}")
-        errors = [error for error in test.query_errors()]
-        add_errors_to_cache(errors, test)
-        add_to_cache(test_error_key, errors)
+        else:
+            log.info(f"Could not find errors for {test.id}")
+            errors = [error for error in test.query_errors()]
+            add_errors_to_cache(errors, test)
+            add_to_cache(test_error_key, errors)
         return errors
     log.info(f"Test {test.id} doesn't contain errors'")
 
