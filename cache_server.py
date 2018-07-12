@@ -24,7 +24,7 @@ class CacheServer(rpyc.Service):
     def on_connect(self):
         log.info("Remote connection accepted")
 
-    def exposed_add_to_cache(self, key_name, data, days_to_keep=30, overwrite=True):
+    def exposed_add_to_cache(self, key_name, data, days_to_keep=30):
         """
         If overwrite data is enabled, add the key to cache
         if overwrite data is False, check whether the key
@@ -33,13 +33,14 @@ class CacheServer(rpyc.Service):
         :type days_to_keep: int
         :type overwrite: bool
         """
-        log.info(
-            f"Saving data {key_name} with ttl={days_to_keep} days and overwrite={overwrite}")
-        if not overwrite and self.r_server.exists(key_name):
-            log.info(f"Key {key_name} already exists, no action is required")
+        if self.r_server.exists(key_name):
+            log.info(f"Key {key_name} already exists, overwriting it with new value")
+            self.r_server.delete(key_name)
+            self.r_server.sadd(key_name, data)
         else:
             self.r_server.sadd(key_name, data)
             log.info(f"Key {key_name} was added to the cache")
+
         if days_to_keep:
             log.info(f"Updating days to keep data for {key_name} to {days_to_keep} days")
             self.r_server.expire(key_name, timedelta(days=days_to_keep))

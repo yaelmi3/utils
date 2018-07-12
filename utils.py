@@ -218,7 +218,7 @@ def query_errors(test):
             errors = [error for error in test.query_errors()]
             add_errors_to_cache(errors, test)
             add_to_cache(test_error_key, errors)
-        return errors
+            return errors
     log.info(f"Test {test.id} doesn't contain errors'")
 
 
