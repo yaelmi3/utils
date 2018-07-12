@@ -246,6 +246,8 @@ def find_test_by_error(exception_type, directory=None):
     test_ids = get_from_cache(exception_type)
     if test_ids:
         tests = [InternalTest(get_test(test_id)) for test_id in test_ids]
+        tests.sort(key=lambda test: arrow.get(test.start_time, 'DD-MM-YY HH:mm:ss').timestamp,
+                   reverse=True)
         html_text = f"<b>{exception_type} - {len(test_ids)} tests</b><br>"
         html_text += create_tests_table(tests)
         save_to_file(f"{exception_type}_{arrow.now().timestamp}.html", html_text, directory)
