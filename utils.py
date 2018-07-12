@@ -326,8 +326,10 @@ def test_matches_requirements(test):
     :type test: backslash.test.Test
     :rtype: bool
     """
-    return test.status in ["FAILURE", "ERROR"] and not test._data['scm_dirty'] and (
-                not test._data['scm_local_branch'] or "/" not in test._data['scm_local_branch'])
+    return not test._data['is_interactive'] and\
+           test.status in ["FAILURE", "ERROR"] and\
+           not test._data['scm_dirty'] and\
+           (not test._data['scm_local_branch'] or "/" not in test._data['scm_local_branch'])
 
 
 def get_session_tests(session):
