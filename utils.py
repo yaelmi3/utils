@@ -218,9 +218,9 @@ def query_errors(test):
             errors = [error for error in test.query_errors()]
             add_errors_to_cache(errors, test)
             add_to_cache(test_error_key, errors)
-            return errors
+        return errors
     log.info(f"Test {test.id} doesn't contain errors'")
-
+    return []
 
 def add_errors_to_cache(errors, test):
     """
@@ -253,7 +253,7 @@ def find_test_by_error(exception_type, directory=None):
         save_to_file(f"{exception_type}_{arrow.now().timestamp}.html", html_text, directory)
 
 
-def get_latest_sessions(days_shift=1, show_successful=False):
+def get_latest_sessions(days_shift, show_successful=False):
     """
     1. Generate timestamp to be used in the query and add it to the query
     2. Execute query and in case result is ok, get the sessions from json
@@ -284,7 +284,7 @@ def _get_exception_type(error):
 
 
 @baker.command
-def obtain_all_test_errors():
+def obtain_all_test_errors(days=1):
     """
     1. Get latest sessions
     2. get all tests in the list
@@ -307,7 +307,7 @@ def obtain_all_test_errors():
                 else:
                     test_and_errors[exception_type] = [test]
 
-    sessions = get_latest_sessions()
+    sessions = get_latest_sessions(days_shift=days)
     all_tests = list(chain.from_iterable([get_session_tests(session) for session in sessions]))
     failed_tests = [test for test in all_tests if test_matches_requirements(test)]
     test_and_errors = {}
