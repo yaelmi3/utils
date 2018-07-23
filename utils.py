@@ -262,7 +262,7 @@ def get_latest_sessions(days_shift, show_successful=False):
     :type show_successful: bool
     :rtype: list(backslash.session.Session)
     """
-    timestamp = arrow.utcnow().shift(days=-days_shift).timestamp
+    timestamp = arrow.utcnow().shift(days=-int(days_shift)).timestamp
     query = config.session_query_template.format(timestamp, str(show_successful).lower())
     log.info(f"Executing query {query}")
     result = requests.get(query)
@@ -352,7 +352,7 @@ def get_session_tests(session):
     else:
         log.info(f"Session {session.id} wasn't found in cache")
         tests = [test for test in session.query_tests()]
-        add_to_cache(session_key, tests, days_to_keep=2)
+        add_to_cache(session_key, tests, days_to_keep=20)
         for test in tests:
             add_to_cache(test.id, test)
     return tests
