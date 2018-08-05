@@ -1,5 +1,4 @@
 import os
-import sys
 import tempfile
 from itertools import chain
 
@@ -7,14 +6,12 @@ import arrow
 import baker
 import requests
 from backslash import Backslash
-from logbook import Logger, StreamHandler
 from urlobject import URLObject
 
 import config
 from cache_client import add_to_cache, get_from_cache, update_cache
+from config import log
 
-StreamHandler(sys.stdout).push_application()
-log = Logger(__name__)
 
 
 class InternalTest(object):
@@ -221,6 +218,7 @@ def query_errors(test):
         return errors
     log.info(f"Test {test.id} doesn't contain errors'")
     return []
+
 
 def add_errors_to_cache(errors, test):
     """

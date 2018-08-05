@@ -1,11 +1,18 @@
 import pickle
 import rpyc
+from socket import gaierror
 
 import config
+from config import log
 
 
 def connect_to_cache():
-    return rpyc.connect(config.cache_server.url, config.cache_server.port)
+    if config.get_cache_state():
+        try:
+            return rpyc.connect(config.cache_server.url, config.cache_server.port)
+        except gaierror as e:
+            config.set_cache_state(False)
+            log.error(f"Failed to connect to redis server: {e}")
 
 
 def add_to_cache(key_name, data, days_to_keep=30):
@@ -19,7 +26,8 @@ def add_to_cache(key_name, data, days_to_keep=30):
     """
     pickled_object = pickle.dumps(data)
     connection = connect_to_cache()
-    connection.root.exposed_add_to_cache(key_name, pickled_object, days_to_keep)
+    if connection:
+        connection.root.exposed_add_to_cache(key_name, pickled_object, days_to_keep)
 
 
 def update_cache(key_name, new_data):
@@ -54,7 +62,9 @@ def get_from_cache(key_name):
     :type key_name: Union(str, int)
     """
     connection = connect_to_cache()
-    pickled_object = connection.root.exposed_get_from_cache(key_name)
-    if pickled_object:
-        return pickle.loads(pickled_object)
+    if connection:
+        pickled_object = connection.root.exposed_get_from_cache(key_name)
+        if pickled_object:
+            return pickle.loads(pickled_object)
+
 

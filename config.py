@@ -1,4 +1,26 @@
+import sys
 from collections import namedtuple
+from logbook import Logger, StreamHandler
+
+
+StreamHandler(sys.stdout).push_application()
+log = Logger(__name__)
+
+cache_server_up = True
+
+
+def get_cache_state():
+    global cache_server_up
+    return cache_server_up
+
+
+def set_cache_state(state):
+    """
+    Updates current cache server per session
+    :type state: bool
+    """
+    global cache_server_up
+    cache_server_up = state
 
 backslash_url = "https://backslash.infinidat.com/"
 
