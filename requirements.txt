@@ -10,4 +10,4 @@ arrow
 pytest
 bs4
 dominate
-
+lxml
