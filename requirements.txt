@@ -7,3 +7,4 @@ flask
 rpyc==3.4.4
 redis
 arrow
+pytest
