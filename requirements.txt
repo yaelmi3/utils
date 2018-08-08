@@ -9,3 +9,5 @@ redis
 arrow
 pytest
 bs4
+dominate
+
