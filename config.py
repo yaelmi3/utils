@@ -1,5 +1,6 @@
 import sys
 from collections import namedtuple
+
 from logbook import Logger, StreamHandler
 
 StreamHandler(sys.stdout).push_application()
@@ -15,11 +16,12 @@ backslash_test_query_template = "https://backslash.infinidat.com/rest/tests?page
 
 table_style = '<style type="text/css"> .tg  {border-collapse:collapse;border-spacing:0;} ' \
               '.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;' \
-              'border-style:solid;border-width:1px;overflow:hidden;word-break:normal;' \
+              'border-style:solid;border-width:5px;overflow:hidden;word-break:normal;' \
               'border-color:black;} .tg th{font-family:Arial, sans-serif;font-size:14px;' \
               'font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:' \
               'hidden;word-break:normal;border-color:black;} .tg .tg-yw4l{vertical-align:top}' \
               ' </style> <table class="tg">'
+
 
 cell_style = '<th class="tg-yw4l">{}</th>'
 bold_cell_style = '<th class="tg-yw4l"><b>{}</b></th>'
@@ -37,3 +39,9 @@ headers = {'Content-Type': 'application/json'}
 max_error_length = 50
 
 failed_statuses = ["ERROR", "FAILURE"]
+
+from_address = "ymintz@infinidat.com"
+
+smtp_server = 'smtp-dev.lab.il.infinidat.com'
+
+ignore_branches = ["/", "cli"]
