@@ -66,7 +66,7 @@ def obtain_all_test_errors(days=1, *send_email):
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
     for test in failed_tests:
         update_errors()
-    html_text = ''
+    html_text = f'<h2>{len(failed_tests)} were found</h2><br>'
     for error_name, tests in test_and_errors.items():
         error_name_str = error_name.replace("<",'')
         html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
