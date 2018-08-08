@@ -3,10 +3,48 @@ import tempfile
 
 import arrow
 import baker
+from bs4 import BeautifulSoup
 
 import config
-from elastic_search_queries import get_failed_tests, process_error
 from config import log
+from elastic_search_queries import get_failed_tests, process_error
+
+
+def table_of_contents(html):
+    """
+    Analyze thr given html file and add table of contents, based on specified tags in the html
+    :type html: str
+    :rtype: str
+    """
+    soup = BeautifulSoup(html, "lxml")
+    toc = []
+    current_list = toc
+    previous_tag = None
+    for header in soup.findAll(['h2', 'h3']):
+        if 'tag' in header.attrs:
+            header['id'] = header.attrs['tag']
+            if previous_tag == 'h2' and header.name == 'h3':
+                current_list = []
+            elif previous_tag == 'h3' and header.name == 'h2':
+                toc.append(current_list)
+                current_list = toc
+            header_content = header.string if header.string else header.a
+            current_list.append((header['id'], header_content))
+            previous_tag = header.name
+    if current_list != toc:
+        toc.append(current_list)
+    return "<h2> Table of Contents </h2> " + _list_to_html(toc) + html
+
+
+def _list_to_html(lst):
+    result = ["<ul>"]
+    for item in lst:
+        if isinstance(item, list):
+            result.append(_list_to_html(item))
+        else:
+            result.append('<li><a href="#%s">%s</a></li>' % item)
+    result.append("</ul>")
+    return " ".join(result)
 
 
 def save_to_file(file_name, file_content, directory=None):
@@ -32,7 +70,7 @@ def create_tests_table(tests):
     html_text = config.table_style
     if tests:
         cell = config.cell_style
-        html_text += f"<tr>{''.join([cell.format(value) for value in tests[0].__dict__.keys() if not value.startswith('_')])}</tr>"
+        html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in tests[0].__dict__.keys() if not value.startswith('_')])}</tr>"
         for test in tests:
             html_text += "<tr>"
             html_text += ''.join(
@@ -43,6 +81,12 @@ def create_tests_table(tests):
     log.error("Could not find tests that match the query")
     return ''
 
+
+def _get_table_headers(tests):
+    headers = ''.join([config.bold_cell_style.format(value.title())
+                       for value in tests[0].__dict__.keys()
+                       if not value.startswith('_')])
+    return f"<tr>{headers}</tr>"
 
 def _test_matches_requirements(test):
     """
@@ -83,9 +127,11 @@ def obtain_all_test_errors(days=1):
         update_errors()
     html_text = ''
     for error_name, tests in test_and_errors.items():
-        html_text += f"<b>{error_name}</b><br>"
+        error_name_str = error_name.replace("<",'')
+        html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
         html_text = f"{html_text}<br>{create_tests_table(tests)} <br>"
-    save_to_file("errors.html", html_text)
+    table_of_contents(html_text)
+    save_to_file("errors.html", table_of_contents(html_text))
 
 
 @baker.command
