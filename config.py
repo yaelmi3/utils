@@ -32,7 +32,7 @@ cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy", 6378)
 
 elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
 
-default_params = (('size', '2000'),)
+default_params = (('size', '4000'),)
 
 headers = {'Content-Type': 'application/json'}
 
@@ -45,3 +45,5 @@ from_address = "ymintz@infinidat.com"
 smtp_server = 'smtp-dev.lab.il.infinidat.com'
 
 ignore_branches = ["/", "cli"]
+
+omit_errors = ["KeyboardInterrupt"]

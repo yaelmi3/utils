@@ -1,10 +1,9 @@
-import arrow
 import baker
 
 import config
 from config import log
-from reporting import table_of_contents, handle_html_report
 from elastic_search_queries import get_failed_tests, process_error
+from reporting import table_of_contents, handle_html_report
 
 
 def create_tests_table(tests):
@@ -55,23 +54,30 @@ def obtain_all_test_errors(days=1, *send_email):
         3. In case exception type is missing from the error, the error would be classified as Misc
         """
         for error in test._errors:
-            exception_type = process_error(error)
-            if exception_type in test_and_errors and test not in test_and_errors[exception_type]:
-                test_and_errors[exception_type].append(test)
+
+            if error['message'] not in config.omit_errors:
+                exception_type = process_error(error)
+                if exception_type in test_and_errors and test not in test_and_errors[exception_type]:
+                    test_and_errors[exception_type].append(test)
+                else:
+                    test_and_errors[exception_type] = [test]
             else:
-                test_and_errors[exception_type] = [test]
+                updated_failed_tests.remove(test)
+
 
     test_and_errors = {}
     all_tests = get_failed_tests(days=days, status=config.failed_statuses)
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
+    updated_failed_tests = failed_tests
     for test in failed_tests:
         update_errors()
-    html_text = f'<h2>{len(failed_tests)} were found</h2><br>'
+    html_text = ''
     for error_name, tests in test_and_errors.items():
         error_name_str = error_name.replace("<",'')
         html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
         html_text = f"{html_text}<br>{create_tests_table(tests)} <br>"
-    final_html = table_of_contents(html_text)
+    final_html = f'<h2>{len(updated_failed_tests)} failed tests were found</h2><br>' + table_of_contents(
+        html_text)
     handle_html_report(final_html, send_email)
 
 
