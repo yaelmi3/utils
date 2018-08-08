@@ -22,6 +22,7 @@ table_style = '<style type="text/css"> .tg  {border-collapse:collapse;border-spa
               ' </style> <table class="tg">'
 
 cell_style = '<th class="tg-yw4l">{}</th>'
+bold_cell_style = '<th class="tg-yw4l"><b>{}</b></th>'
 
 table_footer = "</table>"
 
@@ -33,6 +34,6 @@ default_params = (('size', '2000'),)
 
 headers = {'Content-Type': 'application/json'}
 
-max_error_length = 60
+max_error_length = 50
 
 failed_statuses = ["ERROR", "FAILURE"]
