@@ -60,7 +60,7 @@ def get_tests_query(**kwargs):
                                 f" following keys are supported: {supported_keys}"
     tests_query = {"query": {"bool": {"must": []}}}
     for query, query_value in supported_keys.items():
-        if query in kwargs:
+        if query in kwargs and kwargs[query] is not None:
             if query == "days":
                 search_value = {"gt": f"now-{kwargs[query]}d"}
             else:

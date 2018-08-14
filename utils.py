@@ -110,7 +110,8 @@ def get_failed_tests_by_name(test_name, exception_type=None, send_email=None):
     :type exception_type: str
     :type send_email: str
     """
-    tests = get_failed_tests(test_name=test_name, error=exception_type)
+    tests = get_failed_tests(test_name=test_name, error=exception_type,
+                             status=config.failed_statuses)
     html_text = create_tests_table(tests)
     handle_html_report(html_text, send_email)
 
