@@ -62,7 +62,8 @@ def obtain_all_test_errors(days=1, *send_email):
                 else:
                     test_and_errors[exception_type] = [test]
             else:
-                updated_failed_tests.remove(test)
+                if test in updated_failed_tests:
+                    updated_failed_tests.remove(test)
 
 
     test_and_errors = {}
