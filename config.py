@@ -46,4 +46,4 @@ smtp_server = 'smtp-dev.lab.il.infinidat.com'
 
 ignore_branches = ["/", "cli"]
 
-omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit']
+omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED']
