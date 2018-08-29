@@ -48,6 +48,4 @@ jira_query = 'updated > -365d' \
              ' and (project = "Infinibox Tests" or' \
              ' project = InfiniBox or project = "Infrastructure Development")'
 
-omit_test_names = ['<interactive>', 'Interactive', 'mayhem']
-
 jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0}</a>'
