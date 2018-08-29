@@ -28,12 +28,13 @@ def get_failed_tests(**kwargs):
         :rtype: bool
         """
         test_name = test['_source']['test']['name']
-        if test_params:
-            return True
-        if test_name in test_names:
-            return False
-        test_names.append(test_name)
-        return True
+        if test_name.startswith('test_'):
+            if test_params:
+                return True
+            if test_name not in test_names:
+                test_names.append(test_name)
+                return True
+
 
     elastic_search = ElasticSearch()
     failed_tests_meta = elastic_search.get_failed_tests_results(**kwargs)
@@ -48,10 +49,9 @@ def get_failed_tests(**kwargs):
 
 def additional_processing(tests, kwargs):
     """
-    1. If test_params weren't requested, we need to remove all the duplicate tests and remain
-    :param tests:
-    :param kwargs:
-    :return:
+    Query JIRA and attach tickets to InternalTest objectsת ןכ רק/וןרקג
+    :type tests: [InternalTest]
+    :type kwargs: dict
     """
     if kwargs.get('attach_jira_ticket'):
         existing_jira_tickets = {}
@@ -71,6 +71,14 @@ def _sort_tests(tests):
 
 
 def search_for_jira_tickets(test, query_string, existing_jira_tickets):
+    """
+    1. Silence the log
+    2. Perform JIRA query and then verify that the specific, full string really appears in the
+        summary or the description
+    :type test: InternalTest
+    :type query_string: str
+    :type existing_jira_tickets: dict
+    """
     with document_exception(), silence_log_output():
         tickets = [ticket for ticket in client.search(config.jira_query.format(query_string))
                 if query_string in ticket.get_summary() or
@@ -83,25 +91,25 @@ def get_jira_tickets(test, existing_jira_tickets):
     """
     1. Get all jira tickets that contain test name
     2. Filter tickets that contain specifically the test name in summary and description
-
-    2. Get all jira tickets that contain errors
-    :type test_name: str
-    :type errors: list(str)
+    3. Get all jira tickets that contain errors
+    4. existing_jira_tickets keeps already the tickets that were queried. This specifically apply
+        for repearing errors under different tests
+    :type test: InternalTest
+    :type existing_jira_tickets: dict
     """
-    if test.test_name not in config.omit_test_names:
-        if test.test_name in existing_jira_tickets:
-            log.info(f"Tickets for {test.test_name} were alaready obtained")
-            test._related_tickets.extend(existing_jira_tickets[test.test_name])
+    if test.test_name in existing_jira_tickets:
+        log.info(f"Tickets for {test.test_name} were alaready obtained")
+        test._related_tickets.extend(existing_jira_tickets[test.test_name])
+    else:
+        log.info(f"Getting jira tickets for {test.test_name}")
+        search_for_jira_tickets(test, test.test_name, existing_jira_tickets)
+    for error in test._errors:
+        error_message = error.get('message').replace("{", '').replace("}", '')
+        if error_message in existing_jira_tickets:
+            test._related_tickets.extend(existing_jira_tickets[error_message])
         else:
-            log.info(f"Getting jira tickets for {test.test_name}")
-            search_for_jira_tickets(test, test.test_name, existing_jira_tickets)
-        for error in test._errors:
-            error_message = error.get('message').replace("{", '').replace("}", '')
-            if error_message in existing_jira_tickets:
-                test._related_tickets.extend(existing_jira_tickets[error_message])
-            else:
-                if error_message not in config.omit_errors and len(error_message) < 150:
-                    search_for_jira_tickets(test, error_message, existing_jira_tickets)
+            if error_message not in config.omit_errors and len(error_message) < 150:
+                search_for_jira_tickets(test, error_message, existing_jira_tickets)
     if test._related_tickets:
         test.related_tickets = ' '.join(
             {config.jira_link.format(ticket.key) for ticket in test._related_tickets})

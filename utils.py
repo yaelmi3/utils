@@ -3,7 +3,7 @@ import baker
 import config
 from elastic_search_queries import process_error
 from processing_tests import get_failed_tests
-from reporting import table_of_contents, handle_html_report, create_tests_table
+from reporting import handle_html_report, create_tests_table, create_errors_table
 
 
 def _test_matches_requirements(test):
@@ -12,8 +12,9 @@ def _test_matches_requirements(test):
     :type test: backslash.test.Test
     :rtype: bool
     """
-    return test.test_name not in ['Interactive', 'mayhem'] and not \
-        [branch_name for branch_name in config.ignore_branches if branch_name in test.branch]
+    return test.test_name.startswith('test_') and not [branch_name for branch_name in
+                                                      config.ignore_branches if
+                                                      branch_name in test.branch]
 
 
 @baker.command
@@ -51,13 +52,7 @@ def obtain_all_test_errors(days=1, *send_email):
     updated_failed_tests = failed_tests
     for test in failed_tests:
         update_errors()
-    html_text = ''
-    for error_name, tests in test_and_errors.items():
-        error_name_str = error_name.replace("<",'')
-        html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
-        html_text = f"{html_text}<br>{create_tests_table(tests)} <br>"
-    final_html = f'<h2>{len(updated_failed_tests)} failed tests were found</h2><br>' + table_of_contents(
-        html_text)
+    final_html = create_errors_table(test_and_errors, updated_failed_tests)
     handle_html_report(final_html, send_email)
 
 

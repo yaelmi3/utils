@@ -173,3 +173,13 @@ def create_tests_table(tests):
         return html_text
     log.error("Could not find tests that match the query")
     return ''
+
+
+def create_errors_table(test_and_errors, updated_failed_tests):
+    html_text = ''
+    for error_name, tests in test_and_errors.items():
+        error_name_str = error_name.replace("<",'')
+        html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
+        html_text = f"{html_text}<br>{create_tests_table(tests)} <br>"
+    return f'<h2>{len(updated_failed_tests)} failed tests were found</h2><br>' + table_of_contents(
+        html_text)
