@@ -1,28 +1,31 @@
-from collections import namedtuple
 import arrow
 import requests
+from collections import namedtuple
 
 import config
-from config import log
+from logs import log
 
 
 class InternalTest(object):
-    def __init__(self, backslash_test):
+    def __init__(self, backslash_test, test_params, jira_tickets):
         test_data = backslash_test['_source']
         self.test_link = f'<a href="{config.backslash_url}#/tests/{test_data["logical_id"]}">' \
                          f'{test_data["logical_id"]}</a>'
         self.test_name = test_data['test']['name']
-        self.parameters = test_data['parameters']
-        self.first_error = _truncate_text(test_data['errors'][0]['message'], 120) if test_data['errors'] else ''
+        if test_params:
+            self.parameters = test_data['parameters']
+        self.first_error = _truncate_text(test_data['errors'][0]['message'], 120) if test_data[
+            'errors'] else ''
         self.version = test_data['subjects'][0]['version']
         self.start_time = arrow.get(test_data['start_time']).format('DD-MM-YY HH:mm:ss')
         self.duration = arrow.get(
             arrow.get(test_data['end_time'] - test_data['start_time'])).format('HH:mm:ss')
         self.user_name = test_data['user_email'].split('@')[0]
         self.branch = test_data['scm_local_branch'] if test_data['scm_local_branch'] else ''
-        self.comment = test_data["last_comment"]['comment'] \
-            if test_data['num_comments'] and test_data.get("last_comment") else ''
         self._errors = test_data['errors']
+        if jira_tickets:
+            self._related_tickets = []
+            self.related_tickets = ''
 
 
 def process_error(error):
@@ -55,9 +58,6 @@ def get_tests_query(**kwargs):
                       'days': Query("range", "updated_at"),
                       'status': Query('terms', 'status')
                       }
-    unexpected_keys = [key for key in kwargs if key not in supported_keys]
-    assert not unexpected_keys, f"Unexpected keys were provided: {unexpected_keys}. Only the" \
-                                f" following keys are supported: {supported_keys}"
     tests_query = {"query": {"bool": {"must": []}}}
     for query, query_value in supported_keys.items():
         if query in kwargs and kwargs[query] is not None:
@@ -108,22 +108,3 @@ class ElasticSearch(object):
         return self.post_query_request(erros_query)
 
 
-def get_failed_tests(**kwargs):
-    """
-    1. Get results from elastic search
-    2. Convert tests to InternalTest object
-    """
-    elastic_search = ElasticSearch()
-    failed_tests_meta = elastic_search.get_failed_tests_results(**kwargs)
-    return _sort_tests([InternalTest(test) for test in failed_tests_meta])
-
-
-def _sort_tests(tests):
-    """
-    sort tests by start time
-    :type tests: list 
-    :rtype: list 
-    """
-    tests.sort(key=lambda test: arrow.get(test.start_time, 'DD-MM-YY HH:mm:ss').timestamp,
-               reverse=True)
-    return tests

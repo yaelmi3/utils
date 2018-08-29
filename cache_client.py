@@ -3,7 +3,7 @@ import rpyc
 from socket import gaierror
 
 import config
-from config import log
+from logs import log
 
 
 def connect_to_cache():
