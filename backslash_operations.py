@@ -5,7 +5,7 @@ from urlobject import URLObject
 
 import config
 from cache_client import get_from_cache, add_to_cache
-from config import log
+from logs import log
 
 
 def get_session_tests(session):

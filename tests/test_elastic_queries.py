@@ -12,10 +12,9 @@ def test_get_tests_with_unexpected_args():
     Steps:
         Attempt to get query, when one of the arguments is invalid
     Expected:
-        Assertion error should be raised
+        additional arg should be ignored
     """
-    with pytest.raises(AssertionError):
-        get_tests_query(test_name=TEST_NAME, error=ERROR_NAME, bla="bla")
+    get_tests_query(test_name=TEST_NAME, error=ERROR_NAME, bla="bla")
         
         
 def test_get_tests_with_error():

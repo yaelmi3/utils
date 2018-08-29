@@ -8,13 +8,12 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
-
 import dominate
 from bs4 import BeautifulSoup
 from dominate import tags
 
 import config
-from config import log
+from logs import log
 
 
 def generate_html_report(html, recipients, message):
@@ -153,3 +152,24 @@ def save_to_file(file_name, file_content, directory=None):
     with open(file_path, 'w') as file_handle:
         file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")
+
+
+def create_tests_table(tests):
+    """
+    Generate html table as string, using predefined styles
+    :type tests: list(backslash.test.Test)
+    :rtype: str
+    """
+    html_text = config.table_style
+    if tests:
+        cell = config.cell_style
+        html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in tests[0].__dict__.keys() if not value.startswith('_')])}</tr>"
+        for test in tests:
+            html_text += "<tr>"
+            html_text += ''.join(
+                [cell.format(value) for key, value in test.__dict__.items() if not key.startswith('_')])
+            html_text += "</tr>"
+        html_text += "</table>"
+        return html_text
+    log.error("Could not find tests that match the query")
+    return ''

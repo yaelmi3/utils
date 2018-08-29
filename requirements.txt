@@ -12,3 +12,4 @@ bs4
 dominate
 lxml
 ipython
+ecosystem

@@ -1,10 +1,4 @@
-import sys
 from collections import namedtuple
-
-from logbook import Logger, StreamHandler
-
-StreamHandler(sys.stdout).push_application()
-log = Logger(__name__)
 
 backslash_url = "https://backslash.infinidat.com/"
 
@@ -47,3 +41,13 @@ smtp_server = 'smtp-dev.lab.il.infinidat.com'
 ignore_branches = ["/", "cli"]
 
 omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED']
+
+jira_query = 'updated > -365d' \
+             ' and resolution not in (Duplicate,  "Not a Bug")' \
+             ' and (summary ~ "{0}" or description ~ "{0}")' \
+             ' and (project = "Infinibox Tests" or' \
+             ' project = InfiniBox or project = "Infrastructure Development")'
+
+omit_test_names = ['<interactive>', 'Interactive', 'mayhem']
+
+jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0}</a>'

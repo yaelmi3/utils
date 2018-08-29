@@ -1,30 +1,9 @@
 import baker
 
 import config
-from config import log
-from elastic_search_queries import get_failed_tests, process_error
-from reporting import table_of_contents, handle_html_report
-
-
-def create_tests_table(tests):
-    """
-    Generate html table as string, using predefined styles
-    :type tests: list(backslash.test.Test)
-    :rtype: str
-    """
-    html_text = config.table_style
-    if tests:
-        cell = config.cell_style
-        html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in tests[0].__dict__.keys() if not value.startswith('_')])}</tr>"
-        for test in tests:
-            html_text += "<tr>"
-            html_text += ''.join(
-                [cell.format(value) for key, value in test.__dict__.items() if not key.startswith('_')])
-            html_text += "</tr>"
-        html_text += "</table>"
-        return html_text
-    log.error("Could not find tests that match the query")
-    return ''
+from elastic_search_queries import process_error
+from processing_tests import get_failed_tests
+from reporting import table_of_contents, handle_html_report, create_tests_table
 
 
 def _test_matches_requirements(test):
@@ -65,9 +44,9 @@ def obtain_all_test_errors(days=1, *send_email):
                 if test in updated_failed_tests:
                     updated_failed_tests.remove(test)
 
-
     test_and_errors = {}
-    all_tests = get_failed_tests(days=days, status=config.failed_statuses)
+    all_tests = get_failed_tests(days=days, status=config.failed_statuses, attach_jira_ticket=True,
+                                 test_params=False)
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
