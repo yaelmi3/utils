@@ -1,0 +1,141 @@
+{% extends "layout.html" %}
+{% block body %}
+<style>
+input.desc
+{
+    width: 650px;
+    height: 20px;
+    margin-bottom: 20px;
+{#    background-color: aliceblue;#}
+}
+
+input.break {
+    word-wrap: break-word;
+    word-break: break-all;
+    height: 80px;
+}
+
+
+</style>
+
+  <p><a href="/">Back</a></p>
+  {% if selected_action %}
+    <p class=toolbar_info><strong>{{selected_action.replace("_", " ").title()}}</strong>
+  {% endif %}
+  <form name="execute" action="{{ url_for('execute') }}" onsubmit="return(validateForm())" enctype="multipart/form-data" method="POST">
+    <dl>
+        {% if 'flags' in entry %}
+            <input type="button" onclick="toggle_visibility('kwargs_fields', 'toggle_options');toggle_visibility('flags', 'toggle_options')" id="toggle_options" value="Show Flags"><br><br>
+        {% endif %}
+        {% for category in entry %}
+            {% if category != 'arguments' %}
+                <fieldset id="{{category}}" style="display:none">
+            {% else %}
+                <fieldset id="{{category}}">
+            {% endif %}
+                <legend><h3>{{category.replace('_', ' ').title()}}</h3></legend>
+                {% for fields in entry[category] %}
+                    <br>
+                    <dt><ins> {{fields['name'].replace('_', ' ').title()}}:</ins></dt>
+                    <dd>
+                        {% if fields['type'] != 'text' %}
+                            {% if fields['type'] == 'radio' %}
+                                {% for option in fields['fields'] %}
+                                    <input type="{{fields['type']}}" name="{{fields['name']}}" id="{{option['name']}}" checked value="{{option['name']}}" >{{option['name'].replace('_', ' ').title()}}
+                                    {% if option['type'] == 'select' %}
+                                        <select name="{{option['name']}}">
+                                            {% for drop_down in option['fields'] %}
+                                                <option value="{{drop_down}}" name="{{drop_down}}">{{drop_down}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    <br>
+                                    {% else %}
+                                        {%  if option['type'] == 'file' %}
+                                            <input type="{{option['type']}}" name="{{option['name']}}" id="files" multiple><br>
+                                            <pre id="filelist" style="display:none;"></pre>
+                                        {% else %}
+                                            <input type="{{option['type']}}" value="{{option['default']}}" name="{{option['name']}}" ><br>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif fields['type'] == 'select' %}
+                                <select name="{{fields['name']}}">
+                                    {% for drop_down in fields['fields'] %}
+                                        <option value="{{drop_down['name']}}" name="{{drop_down['name']}}">{{drop_down['name']}}</option>
+                                    {% endfor %}
+                                </select>
+                                <br>
+                            {% else %}
+
+                                {% if fields['default'] == False %}
+                                    <input type="{{fields['type']}}" checked name={{fields['name']}} value=True><br>
+                                {% else %}
+                                    <input type="{{fields['type']}}" name={{fields['name']}} value={{fields['default']}}><br>
+                                {% endif %}
+
+                            {% endif %}
+
+                        {% else %}
+                             {% if fields['required'] %}
+                                <dl><input type={{fields['type']}} name={{fields['name']}} value="{{fields['default']}}" required></dl>
+                             {% else %}
+                                {% if fields['name'] == 'description' %}
+                                    <dl><input class="desc" type={{fields['type']}} name={{fields['name']}} value="{{fields['default']}}" ></dl>
+                                {% else %}
+                                    <dl><input type="{{fields['type']}}" value="{{fields['default']}}" name={{fields['name']}}></dl>
+                                {% endif %}
+
+                             {% endif %}
+
+                        {% endif %}
+                    </dd>
+                {% endfor %}
+
+            </fieldset><br>
+        {% endfor %}
+    </dl>
+    <br>
+
+
+    <img src="{{ url_for('static', filename='loadingimage.gif') }}" id="loading_img" style="display:None"/>
+    <h2 id="loading_text" style="display:None">Processing... Please wait.</h2>
+
+    <input type=submit value="Submit" name={{selected_action}} id="submit_button">
+
+    <script type="text/javascript">
+
+        function validateForm() {
+            var optional_fields = ["exception"]
+
+            for (var i=0; i < optional_fields.length; i++)
+            {
+                if (document.forms["execute"].hasOwnProperty(optional_fields[i]) && document.forms["execute"][optional_fields[i]].value=='')
+                {
+                    var response =  confirm("No " + optional_fields[i] + " was provided. Are you sure you want to proceed?")
+
+                    if (response==true)
+                    {
+                        displayLoading()
+                    }
+                    return response
+                }
+            }
+            displayLoading()
+         };
+
+        function displayLoading()
+        {
+            var load_elements = ["loading_img", "loading_text"];
+            for (var i=0; i < load_elements.length; i++)
+            {
+                loading_element = document.getElementById(load_elements[i]);
+                loading_element.style.display = 'block'
+            }
+            submit_button = document.getElementById("submit_button")
+            submit_button.style.display = "None"
+        }
+
+   </script>
+  </form>
+
+{% endblock %}

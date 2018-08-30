@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <h2>Greetings! </h2>
+
+    <ul class=categories>
+        <div id="tabContainer">
+            <div id="tabs">
+              <ul>
+                {% set count = 1 %}
+                {% set tabHeader_prefix = 'tabHeader_' %}
+                {% for category in categories.keys() %}
+                    {% set full_tab_header = tabHeader_prefix + loop.index|string %}
+                    <li id = {{ full_tab_header }}>{{category.replace('_', ' ').title()}}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div id="tabscontent">
+                {% set tabpage_prefix = 'tabpage_' %}
+                {% for category in categories.keys() %}
+                      {% set full_tab_page = tabpage_prefix + loop.index|string %}
+                      <div class="tabpage" id={{full_tab_page}}>
+                          <h3>{{category.replace('_', ' ').title()}}</h3>
+                          {% for entry in categories[category] %}
+                            <h2><a href="/action/{{entry}}">{{entry.replace("_", " ").title()}}</a></h2>
+                          {% endfor %}
+                          {% if category.lower() in extra_options %}
+                            <!-- This section will appear only if configured extra_options -->
+                            {% for option in extra_options[category] %}
+                              <h2><a href="/{{ option }}">{{ option.replace('_', ' ').title() }}</a></h2>
+                            {% endfor %}
+                          {% endif %}
+                      </div>
+
+                      {% set count = count + 1 %}
+                {% endfor %}
+            </div>
+        </div>
+    </ul>
+
+    <script src="../static/tabs.js"></script>
+
+{% endblock %}

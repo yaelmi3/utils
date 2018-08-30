@@ -1,10 +1,13 @@
 import arrow
+from cachetools import cached, TTLCache
 from ecosystem.jira import client
 
 import config
 from elastic_search_queries import ElasticSearch, InternalTest
 from exceptions import document_exception
 from logs import silence_log_output, log
+
+cache = TTLCache(maxsize=4000, ttl=60 * 60 * 2)
 
 
 def get_failed_tests(**kwargs):
@@ -35,13 +38,12 @@ def get_failed_tests(**kwargs):
                 test_names.append(test_name)
                 return True
 
-
     elastic_search = ElasticSearch()
     failed_tests_meta = elastic_search.get_failed_tests_results(**kwargs)
     test_params = kwargs.get("test_params", True)
     test_names = []
     tests = _sort_tests(
-        [InternalTest(test, test_params=test_params, jira_tickets=kwargs.get('attach_jira_ticket'))
+        [InternalTest(test, test_params=test_params, jira_tickets=kwargs.get('with_jira_tickets'))
                          for test in failed_tests_meta if test_should_be_added(test)])
     additional_processing(tests, kwargs)
     return tests
@@ -49,14 +51,21 @@ def get_failed_tests(**kwargs):
 
 def additional_processing(tests, kwargs):
     """
-    Query JIRA and attach tickets to InternalTest objectsת ןכ רק/וןרקג
+    1. Remove tests that contain omitted errors
+    2. Query JIRA and attach tickets to InternalTest objects
     :type tests: [InternalTest]
     :type kwargs: dict
     """
-    if kwargs.get('attach_jira_ticket'):
-        existing_jira_tickets = {}
+    all_tests = tests[:]
+    for test in all_tests:
+        for error in test._errors:
+            error_message = error.get('message')
+            if error_message in config.omit_errors:
+                tests.remove(test)
+                break
+    if kwargs.get('with_jira_tickets'):
         for test in tests:
-            get_jira_tickets(test, existing_jira_tickets)
+            get_jira_tickets(test)
 
 
 def _sort_tests(tests):
@@ -70,46 +79,48 @@ def _sort_tests(tests):
     return tests
 
 
-def search_for_jira_tickets(test, query_string, existing_jira_tickets):
+def search_for_jira_tickets(test, query_string):
     """
     1. Silence the log
     2. Perform JIRA query and then verify that the specific, full string really appears in the
         summary or the description
     :type test: InternalTest
     :type query_string: str
-    :type existing_jira_tickets: dict
     """
     with document_exception(), silence_log_output():
-        tickets = [ticket for ticket in client.search(config.jira_query.format(query_string))
-                if query_string in ticket.get_summary() or
-                (ticket.get_field("description") and query_string in ticket.get_field("description"))]
+        tickets = _query_jira(query_string)
         test._related_tickets.extend(tickets)
-        existing_jira_tickets[query_string] = tickets
 
 
-def get_jira_tickets(test, existing_jira_tickets):
+@cached(cache)
+def _query_jira(query_string):
+    return [ticket for ticket in client.search(config.jira_query.format(query_string))
+            if query_string in ticket.get_summary() or
+            (ticket.get_field("description") and query_string in ticket.get_field(
+                "description"))]
+
+
+def get_jira_tickets(test):
     """
     1. Get all jira tickets that contain test name
     2. Filter tickets that contain specifically the test name in summary and description
-    3. Get all jira tickets that contain errors
+    3. Get all jira tickets that contain the errors in the test
+    5. Search tickets by test id
     4. existing_jira_tickets keeps already the tickets that were queried. This specifically apply
         for repearing errors under different tests
     :type test: InternalTest
     :type existing_jira_tickets: dict
     """
-    if test.test_name in existing_jira_tickets:
-        log.info(f"Tickets for {test.test_name} were alaready obtained")
-        test._related_tickets.extend(existing_jira_tickets[test.test_name])
-    else:
-        log.info(f"Getting jira tickets for {test.test_name}")
-        search_for_jira_tickets(test, test.test_name, existing_jira_tickets)
+
+    log.info(f"Getting jira tickets for {test.test_name}")
+    search_for_jira_tickets(test, test.test_name)
     for error in test._errors:
         error_message = error.get('message').replace("{", '').replace("}", '')
-        if error_message in existing_jira_tickets:
-            test._related_tickets.extend(existing_jira_tickets[error_message])
-        else:
-            if error_message not in config.omit_errors and len(error_message) < 150:
-                search_for_jira_tickets(test, error_message, existing_jira_tickets)
+        if error_message not in config.generic_errors and len(error_message) < 150:
+            log.info(f"Getting jira tickets for error: {error_message}")
+            search_for_jira_tickets(test, error_message)
+    log.info(f"Getting jira tickets for id {test._id}")
+    search_for_jira_tickets(test, test._id)
     if test._related_tickets:
         test.related_tickets = '    '.join(
             {config.jira_link.format(ticket.key, ticket.get_resolution()) for ticket in

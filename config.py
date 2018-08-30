@@ -8,8 +8,8 @@ session_query_template = 'https://backslash.infinidat.com/rest/sessions?page_siz
 backslash_test_query_template = "https://backslash.infinidat.com/rest/tests?page_size=2000&search={0}" \
                       "&show_abandoned=false&show_skipped=false&show_successful={1}"
 
-table_style = '<style type="text/css"> .tg  {border-collapse:collapse;border-spacing:0;} ' \
-              '.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;' \
+table_style = '<style type="text/css">table { table-layout:auto;width="100%"} .tg  {border-collapse:collapse;border-spacing:0;} ' \
+              '.tg td{word-wrap: break-word, overflow: hidden;text-overflow: ellipsis; font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;' \
               'border-style:solid;border-width:5px;overflow:hidden;word-break:normal;' \
               'border-color:black;} .tg th{font-family:Arial, sans-serif;font-size:14px;' \
               'font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:' \
@@ -42,9 +42,11 @@ ignore_branches = ["/", "cli"]
 
 omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED']
 
+generic_errors = ["AssertionError"]
+
 jira_query = 'updated > -365d' \
              ' and resolution not in (Duplicate,  "Not a Bug", "Idea Rejected")' \
-             ' and (summary ~ "{0}" or description ~ "{0}")' \
+             ' and (text ~ "{0}")' \
              ' and (project = "Infinibox Tests" or' \
              ' project = InfiniBox or project = "Infrastructure Development")'
 
