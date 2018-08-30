@@ -111,5 +111,6 @@ def get_jira_tickets(test, existing_jira_tickets):
             if error_message not in config.omit_errors and len(error_message) < 150:
                 search_for_jira_tickets(test, error_message, existing_jira_tickets)
     if test._related_tickets:
-        test.related_tickets = ' '.join(
-            {config.jira_link.format(ticket.key) for ticket in test._related_tickets})
+        test.related_tickets = '    '.join(
+            {config.jira_link.format(ticket.key, ticket.get_resolution()) for ticket in
+             test._related_tickets})

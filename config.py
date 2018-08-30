@@ -43,9 +43,10 @@ ignore_branches = ["/", "cli"]
 omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED']
 
 jira_query = 'updated > -365d' \
-             ' and resolution not in (Duplicate,  "Not a Bug")' \
+             ' and resolution not in (Duplicate,  "Not a Bug", "Idea Rejected")' \
              ' and (summary ~ "{0}" or description ~ "{0}")' \
              ' and (project = "Infinibox Tests" or' \
              ' project = InfiniBox or project = "Infrastructure Development")'
 
-jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0}</a>'
+jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0} - {1}</a>'
+
