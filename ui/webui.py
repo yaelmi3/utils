@@ -1,15 +1,12 @@
 from flask import Flask
 from collections import OrderedDict
 from flask import request, render_template
-from flask_menu import Menu, register_menu
 from ui.ui_helper import get_main_inputs, execute_command
 
 app = Flask(__name__)
-Menu(app=app)
 
 
 @app.route('/')
-@register_menu(app, '.', 'Home')
 def index():
     return render_template('show_entries.html',
                            categories=get_main_inputs())
