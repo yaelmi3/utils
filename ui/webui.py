@@ -3,7 +3,6 @@ from collections import OrderedDict
 from flask import request, render_template
 from flask_menu import Menu, register_menu
 from ui.ui_helper import get_main_inputs, execute_command
-import requests
 
 app = Flask(__name__)
 Menu(app=app)
@@ -35,4 +34,4 @@ def execute():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", threaded=True)
+    app.run(debug=False, host="0.0.0.0", threaded=True)

@@ -13,3 +13,4 @@ dominate
 lxml
 ipython
 ecosystem
+cachetools
