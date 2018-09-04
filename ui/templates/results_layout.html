@@ -1,0 +1,13 @@
+<!doctype html>
+<title>Automation UI</title>
+<link rel="shortcut icon" href="{{ url_for('static', filename='sheep.png') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<div class=results_page>
+  <img src="{{ url_for('static', filename='automation_ui_sheep.png') }}" />
+  <hr>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+  {% endfor %}
+  {% block body %}{% endblock %}
+</div>

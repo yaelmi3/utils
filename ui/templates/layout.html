@@ -1,0 +1,25 @@
+<!doctype html>
+<title>Automation UI</title>
+<link rel="shortcut icon" href="{{ url_for('static', filename='sheep.png') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<div class=page>
+  <img src="{{ url_for('static', filename='automation_ui_sheep.png') }}" />
+  <hr>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+
+  <div id="loading"></div>
+    <div id="content">
+        <h3>Type anything:</h3>
+        <p>
+        <form action="." method="POST">
+            <input type="text" name="anything" placeholder="Type anything here">
+            <input type="submit" name="anything_submit" value="Submit" onclick="loading();">
+        </form>
+        </p>
+    </div>
+</div>
+  {% endfor %}
+  {% block body %}{% endblock %}
+</div>

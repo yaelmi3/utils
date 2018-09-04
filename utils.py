@@ -13,12 +13,48 @@ def _test_matches_requirements(test):
     :rtype: bool
     """
     return test.test_name.startswith('test_') and not [branch_name for branch_name in
-                                                      config.ignore_branches if
-                                                      branch_name in test.branch]
+                                                       config.ignore_branches if
+                                                       branch_name in test.branch]
 
 
 @baker.command
-def obtain_all_test_errors(days=1, *send_email):
+def find_test_by_error(exception, with_jira_tickets=False, *send_email):
+    """
+    1. Look for cache for entry with the specified exception type
+    2. If entry found:
+        2.1 Iterate through test id and obtain their test objects
+
+    :type exception: str
+    :type send_email: str
+    """
+    tests = get_failed_tests(error=exception, with_jira_tickets=with_jira_tickets,
+                             status=config.failed_statuses)
+    html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
+    html_text += create_tests_table(tests)
+    return handle_html_report(html_text, send_email, message=f"Results exception {exception}")
+
+
+
+@baker.command
+def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False, *send_email):
+    """
+    1. Get all failed tests objects
+    2. Create html table
+    3. Save html to file. if directory specified, file will be created in dir, otherwise tempdir
+        is used by default
+    :type test_name: str
+    :type exception: str
+    :type with_jira_tickets: bool
+    :type send_email: tuple
+    """
+    tests = get_failed_tests(test_name=test_name, error=exception,
+                             status=config.failed_statuses, with_jira_tickets=with_jira_tickets)
+    html_text = create_tests_table(tests)
+    return handle_html_report(html_text, send_email, message=f"Results for test {test_name}")
+
+
+@baker.command
+def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
     """
     1. Get latest sessions
     2. get all tests in the list
@@ -44,50 +80,18 @@ def obtain_all_test_errors(days=1, *send_email):
             else:
                 if test in updated_failed_tests:
                     updated_failed_tests.remove(test)
-
     test_and_errors = {}
-    all_tests = get_failed_tests(days=days, status=config.failed_statuses, attach_jira_ticket=True,
-                                 test_params=False)
+    test_params = False if with_jira_tickets else True
+    all_tests = get_failed_tests(days=days,
+                                 status=config.failed_statuses,
+                                 with_jira_tickets=with_jira_tickets,
+                                 test_params=test_params)
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
         update_errors()
     final_html = create_errors_table(test_and_errors, updated_failed_tests)
-    handle_html_report(final_html, send_email)
-
-
-@baker.command
-def find_test_by_error(exception_type, *send_email):
-    """
-    1. Look for cache for entry with the specified exception type
-    2. If entry found:
-        2.1 Iterate through test id and obtain their test objects
-
-    :type exception_type: str
-    :type send_email: str
-    """
-    tests = get_failed_tests(error=exception_type, status=config.failed_statuses)
-    html_text = f"<b>{exception_type} - {len(tests)} tests</b><br>"
-    html_text += create_tests_table(tests)
-    handle_html_report(html_text, send_email)
-
-
-
-@baker.command
-def get_failed_tests_by_name(test_name, exception_type=None, send_email=None):
-    """
-    1. Get all failed tests objects
-    2. Create html table
-    3. Save html to file. if directory specified, file will be created in dir, otherwise tempdir
-        is used by default
-    :type test_name: str
-    :type exception_type: str
-    :type send_email: str
-    """
-    tests = get_failed_tests(test_name=test_name, error=exception_type,
-                             status=config.failed_statuses)
-    html_text = create_tests_table(tests)
-    handle_html_report(html_text, send_email)
+    return handle_html_report(final_html, send_email)
 
 
 if __name__ == '__main__':

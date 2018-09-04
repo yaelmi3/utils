@@ -9,8 +9,8 @@ from logs import log
 class InternalTest(object):
     def __init__(self, backslash_test, test_params, jira_tickets):
         test_data = backslash_test['_source']
-        self.test_link = f'<a href="{config.backslash_url}#/tests/{test_data["logical_id"]}">' \
-                         f'{test_data["logical_id"]}</a>'
+        self._id = test_data["logical_id"]
+        self.test_link = f'<a href="{config.backslash_url}#/tests/{self._id}">{self._id}</a>'
         self.test_name = test_data['test']['name']
         if test_params:
             self.parameters = test_data['parameters']

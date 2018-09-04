@@ -1,0 +1,166 @@
+html, body, {
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+}
+body            { font-family: sans-serif; background:  #e6ffe6; }
+a, h1, h2       { color: #698b69; }
+h1, h2          { font-family: 'Georgia', serif; margin: 0; }
+h1              { border-bottom: 2px solid #eee; }
+h2              { font-size: 1.2em; }
+li              { color: #fafafa; }
+th, td          { padding: 0.3em;
+                  border: 1px solid black;}
+
+.page           { margin: 2em auto; width: auto; border: 5px solid #ccc;
+                  padding: 0.8em; background: white; box-sizing: border-box; }
+.results_page   { margin: 2em auto; width: auto; border: 5px solid #ccc;
+                  padding: 0.8em; background: white; box-sizing: border-box; display: inline-block;}
+.entries        { list-style: none; margin: 0; padding: 0; }
+.entries li     { margin: 0.8em 1.2em; }
+.entries li h2  { margin-left: -1em; }
+.add-entry      { font-size: 0.9em; border-bottom: 1px solid #ccc; }
+.add-entry dl   { font-weight: bold; }
+.metanav        { text-align: right; font-size: 0.8em; padding: 0.3em;
+                  margin-bottom: 1em; background: #fafafa; }
+.flash          { background: #cee5F5; padding: 0.5em;
+                  border: 1px solid #458b74; }
+.error          { background: #e6ffe6; padding: 0.5em; }
+
+input[type="text"] {
+    width: 400px;
+    margin-bottom: 10px;
+    background-color: #f7fff7;
+}
+
+textarea {
+	width: 100%;
+    resize: none;
+}
+
+
+#wrapper{
+	width:720px;
+	margin:40px auto 0;
+}
+
+#wrapper h1{
+	color:#FFF;
+	text-align:center;
+	margin-bottom:20px;
+}
+
+#wrapper a{
+	display:block;
+	font-size:1.2em;
+	padding-top:20px;
+	color:#FFF;
+	text-decoration:none;
+	text-align:center;
+}
+
+#tabContainer {
+	width:700px;
+	padding:8px;
+	background-color: #c2f0c2;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#tabs{
+	height:30px;
+	overflow:hidden;
+}
+
+#tabs > ul{
+	font: 1em;
+	list-style:none;
+}
+
+#tabs > ul > li{
+	margin:0 2px 0 0;
+	padding:7px 10px;
+	display:block;
+	float:left;
+	color:#FFF;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+	-moz-border-radius-topleft: 4px;
+	-moz-border-radius-topright: 4px;
+	-moz-border-radius-bottomright: 0px;
+	-moz-border-radius-bottomleft: 0px;
+	border-top-left-radius:4px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 0px;
+	border-bottom-left-radius: 0px;
+	background: #C9C9C9; /* old browsers */
+	background: -moz-linear-gradient(top, #0C91EC 0%, #257AB6 100%); /* firefox */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0C91EC), color-stop(100%,#257AB6)); /* webkit */
+}
+
+#tabs > ul > li:hover{
+	background: #FFFFFF; /* old browsers */
+	background: -moz-linear-gradient(top, #FFFFFF 0%, #F3F3F3 10%, #F3F3F3 50%, #FFFFFF 100%); /* firefox */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFFFFF), color-stop(10%,#F3F3F3), color-stop(50%,#F3F3F3), color-stop(100%,#FFFFFF)); /* webkit */
+	cursor:pointer;
+	color: #333;
+}
+
+#tabs > ul > li.tabActiveHeader{
+	background: #FFFFFF; /* old browsers */
+	background: -moz-linear-gradient(top, #FFFFFF 0%, #F3F3F3 10%, #F3F3F3 50%, #FFFFFF 100%); /* firefox */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFFFFF), color-stop(10%,#F3F3F3), color-stop(50%,#F3F3F3), color-stop(100%,#FFFFFF)); /* webkit */
+	cursor:pointer;
+	color: #333;
+}
+
+#tabscontent {
+	-moz-border-radius-topleft: 0px;
+	-moz-border-radius-topright: 4px;
+	-moz-border-radius-bottomright: 4px;
+	-moz-border-radius-bottomleft: 4px;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	padding:10px 10px 25px;
+	background: #FFFFFF; /* old browsers */
+	background: -moz-linear-gradient(top, #FFFFFF 0%, #FFFFFF 90%, #e4e9ed 100%); /* firefox */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFFFFF), color-stop(90%,#FFFFFF), color-stop(100%,#e4e9ed)); /* webkit */
+	margin:0;
+	color:#333;
+}
+
+#git_log {
+	border: black;
+	border-style: double;
+	font-size: 0.8em;
+	padding: 0.35em;
+	font-weight: 500;
+}
+
+select[size]::-webkit-scrollbar {
+	display: none;
+}
+
+.container { border:2px solid #ccc; width:500px; height: 200px; overflow-y: scroll; }
+
+div#content {
+    display: none;
+    }
+
+div#loading {
+    top: 200 px;
+    margin: auto;
+    position: absolute;
+    z-index: 1000;
+    width: 160px;
+    height: 24px;
+    background: url(loadingimage.gif) no-repeat;
+    cursor: wait;
+    }

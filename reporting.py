@@ -30,6 +30,7 @@ def generate_html_report(html, recipients, message):
     doc = str(doc)
     send_mail(send_to=recipients, subject=subject,
               message=doc, payload=html)
+    return html
 
 
 def send_html_report(doc, payload, subject, recipient_list):
@@ -138,6 +139,8 @@ def handle_html_report(final_html, send_email, message=None):
         generate_html_report(final_html, send_email, message)
     else:
         save_to_file(f"tests_{time.time()}.html", final_html)
+    return final_html
+
 
 
 def save_to_file(file_name, file_content, directory=None):
@@ -152,6 +155,7 @@ def save_to_file(file_name, file_content, directory=None):
     with open(file_path, 'w') as file_handle:
         file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")
+    return file_content
 
 
 def create_tests_table(tests):
@@ -179,7 +183,7 @@ def create_errors_table(test_and_errors, updated_failed_tests):
     html_text = ''
     for error_name, tests in test_and_errors.items():
         error_name_str = error_name.replace("<",'')
-        html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3><br>"
-        html_text = f"{html_text}<br>{create_tests_table(tests)} <br>"
+        html_text += f"<h3 id={error_name_str} tag={error_name_str}>{error_name_str}</h3>"
+        html_text = f"{html_text}{create_tests_table(tests)} <br>"
     return f'<h2>{len(updated_failed_tests)} failed tests were found</h2><br>' + table_of_contents(
         html_text)
