@@ -24,7 +24,7 @@ table_footer = "</table>"
 
 cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy", 6378)
 
-elastic_server_url = 'infra-elastic-search.lab.il.infinidat.com:9200/backslash/_search'
+elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
 
 default_params = (('size', '4000'),)
 
