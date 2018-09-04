@@ -3,7 +3,6 @@ from contextlib import contextmanager
 
 import log
 
-
 @contextmanager
 def document_exception():
     try:

@@ -1,9 +1,12 @@
 from flask import Flask
 from collections import OrderedDict
 from flask import request, render_template
-from ui.ui_helper import get_main_inputs, execute_command
+
 import log
+from ui.ui_helper import get_main_inputs, execute_command
+
 app = Flask(__name__)
+log.init_log()
 
 
 @app.route('/')
@@ -31,5 +34,4 @@ def execute():
 
 
 if __name__ == '__main__':
-    log.init_log()
     app.run(debug=False, host="0.0.0.0", threaded=True)
