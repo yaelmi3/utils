@@ -27,7 +27,7 @@ def get_session_tests(session):
     else:
         log.info(f"Session {session.id} wasn't found in cache")
         tests = [test for test in session.query_tests()]
-        add_to_cache(session_key, tests, days_to_keep=2)
+        add_to_cache(session_key, tests, ttl=2)
         for test in tests:
             add_to_cache(test.id, test)
     return tests

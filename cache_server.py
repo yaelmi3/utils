@@ -12,11 +12,6 @@ REDIS_PORT = 6378
 log = Logger(__name__)
 
 
-def pickle_result(func):
-  def wrapped(*args, **kwargs):
-    return pickle.dumps(func(*args, **kwargs))
-
-
 class CacheServer(rpyc.Service):
     def __init__(self, *args):
         self.r_server = redis.Redis()
@@ -24,26 +19,25 @@ class CacheServer(rpyc.Service):
     def on_connect(self):
         log.info("Remote connection accepted")
 
-    def exposed_add_to_cache(self, key_name, data, days_to_keep=30):
+    def exposed_add_to_cache(self, key_name, data, ttl=60 * 60 * 2):
         """
         If overwrite data is enabled, add the key to cache
         if overwrite data is False, check whether the key
         :type key_name: str
         :type data: bytes
-        :type days_to_keep: int
+        :type ttl: int
         :type overwrite: bool
         """
         if self.r_server.exists(key_name):
-            log.info(f"Key {key_name} already exists, overwriting it with new value")
-            self.r_server.delete(key_name)
-            self.r_server.sadd(key_name, data)
+            log.info(f"Key {key_name} exists")
+            self.r_server.expire(key_name, timedelta(seconds=ttl))
         else:
             self.r_server.sadd(key_name, data)
             log.info(f"Key {key_name} was added to the cache")
 
-        if days_to_keep:
-            log.info(f"Updating days to keep data for {key_name} to {days_to_keep} days")
-            self.r_server.expire(key_name, timedelta(days=days_to_keep))
+        if ttl:
+            log.info(f"Updating days to keep data for {key_name} to {ttl} seconds")
+            self.r_server.expire(key_name, timedelta(seconds=ttl))
 
     def exposed_get_from_cache(self, key_name):
         """

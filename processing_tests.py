@@ -1,13 +1,12 @@
 import arrow
-from cachetools import cached, TTLCache
 from ecosystem.jira import client
 
 import config
+import log
+from cache_client import redis_cache
 from elastic_search_queries import ElasticSearch, InternalTest
 from exceptions import document_exception
-import log
 
-cache = TTLCache(maxsize=4000, ttl=60 * 60 * 2)
 
 
 def get_failed_tests(**kwargs):
@@ -92,7 +91,7 @@ def search_for_jira_tickets(test, query_string):
         test._related_tickets.extend(tickets)
 
 
-@cached(cache)
+@redis_cache
 def _query_jira(query_string):
     return [ticket for ticket in client.search(config.jira_query.format(query_string))
             if query_string in ticket.get_summary() or

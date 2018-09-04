@@ -15,19 +15,19 @@ def connect_to_cache():
             log.error(f"Failed to connect to redis server: {e}")
 
 
-def add_to_cache(key_name, data, days_to_keep=30):
+def add_to_cache(key_name, data, ttl=60 * 60 * 2):
     """
     1. Serialize given object
     2. Send object to cache server
     3. If days to keep = 0, keep forever
     :type key_name: Union(str, int)
     :type data: object
-    :type days_to_keep: int
+    :type ttl: int
     """
     pickled_object = pickle.dumps(data)
     connection = connect_to_cache()
     if connection:
-        connection.root.exposed_add_to_cache(key_name, pickled_object, days_to_keep)
+        connection.root.exposed_add_to_cache(key_name, pickled_object, ttl)
 
 
 def update_cache(key_name, new_data):
@@ -68,3 +68,13 @@ def get_from_cache(key_name):
             return pickle.loads(pickled_object)
 
 
+def redis_cache(func):
+    def wrapper(*args, **kwargs):
+        key_name = args[0]
+        result = get_from_cache(key_name)
+        if result:
+            return result
+        result = func(*args, **kwargs)
+        add_to_cache(key_name, result)
+        return result
+    return wrapper

@@ -18,6 +18,22 @@ table_style = '<style type="text/css">table { table-layout:auto;width="100%"} .t
 
 log_name = "utils.log"
 
+cache_server_up = True
+
+def get_cache_state():
+    global cache_server_up
+    return cache_server_up
+
+
+def set_cache_state(state):
+    """
+    Updates current cache server per session
+    :type state: bool
+    """
+    global cache_server_up
+    cache_server_up = state
+
+
 cell_style = '<th class="tg-yw4l">{}</th>'
 bold_cell_style = '<th class="tg-yw4l"><b>{}</b></th>'
 
