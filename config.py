@@ -16,6 +16,7 @@ table_style = '<style type="text/css">table { table-layout:auto;width="100%"} .t
               'hidden;word-break:normal;border-color:black;} .tg .tg-yw4l{vertical-align:top}' \
               ' </style> <table class="tg">'
 
+log_name = "utils.log"
 
 cell_style = '<th class="tg-yw4l">{}</th>'
 bold_cell_style = '<th class="tg-yw4l"><b>{}</b></th>'

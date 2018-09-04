@@ -3,7 +3,7 @@ import requests
 from collections import namedtuple
 
 import config
-from logs import log
+import log
 
 
 class InternalTest(object):

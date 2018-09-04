@@ -1,7 +1,7 @@
 import traceback
 from contextlib import contextmanager
 
-from logs import log
+import log
 
 
 @contextmanager

@@ -4,8 +4,9 @@ from backslash import Backslash
 from urlobject import URLObject
 
 import config
+import log
 from cache_client import get_from_cache, add_to_cache
-from logs import log
+
 
 
 def get_session_tests(session):
