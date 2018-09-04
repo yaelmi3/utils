@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from dominate import tags
 
 import config
-from logs import log
+import log
 
 
 def generate_html_report(html, recipients, message):

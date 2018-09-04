@@ -5,7 +5,7 @@ from ecosystem.jira import client
 import config
 from elastic_search_queries import ElasticSearch, InternalTest
 from exceptions import document_exception
-from logs import silence_log_output, log
+import log
 
 cache = TTLCache(maxsize=4000, ttl=60 * 60 * 2)
 
@@ -87,7 +87,7 @@ def search_for_jira_tickets(test, query_string):
     :type test: InternalTest
     :type query_string: str
     """
-    with document_exception(), silence_log_output():
+    with document_exception(), log.silence_log_output():
         tickets = _query_jira(query_string)
         test._related_tickets.extend(tickets)
 
@@ -109,17 +109,16 @@ def get_jira_tickets(test):
     4. existing_jira_tickets keeps already the tickets that were queried. This specifically apply
         for repearing errors under different tests
     :type test: InternalTest
-    :type existing_jira_tickets: dict
     """
 
-    log.info(f"Getting jira tickets for {test.test_name}")
+    log.debug(f"Getting jira tickets for {test.test_name}")
     search_for_jira_tickets(test, test.test_name)
     for error in test._errors:
         error_message = error.get('message').replace("{", '').replace("}", '')
         if error_message not in config.generic_errors and len(error_message) < 150:
-            log.info(f"Getting jira tickets for error: {error_message}")
+            log.debug(f"Getting jira tickets for error: {error_message}")
             search_for_jira_tickets(test, error_message)
-    log.info(f"Getting jira tickets for id {test._id}")
+    log.debug(f"Getting jira tickets for id {test._id}")
     search_for_jira_tickets(test, test._id)
     if test._related_tickets:
         test.related_tickets = '    '.join(
