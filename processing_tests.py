@@ -7,7 +7,7 @@ from elastic_search_queries import ElasticSearch, InternalTest
 from exceptions import document_exception
 import log
 
-cache = TTLCache(maxsize=4000, ttl=60 * 60 * 2)
+cache = TTLCache(maxsize=40000, ttl=60 * 60 * 2)
 
 
 def get_failed_tests(**kwargs):
