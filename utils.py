@@ -81,11 +81,9 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
                 if test in updated_failed_tests:
                     updated_failed_tests.remove(test)
     test_and_errors = {}
-    test_params = False if with_jira_tickets else True
     all_tests = get_failed_tests(days=days,
                                  status=config.failed_statuses,
-                                 with_jira_tickets=with_jira_tickets,
-                                 test_params=test_params)
+                                 with_jira_tickets=with_jira_tickets,)
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:

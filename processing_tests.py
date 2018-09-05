@@ -40,10 +40,11 @@ def get_failed_tests(**kwargs):
 
     elastic_search = ElasticSearch()
     failed_tests_meta = elastic_search.get_failed_tests_results(**kwargs)
-    test_params = kwargs.get("test_params", True)
+    with_jira_tickets = kwargs.get('with_jira_tickets')
+    test_params = False if with_jira_tickets else True
     test_names = []
     tests = _sort_tests(
-        [InternalTest(test, test_params=test_params, jira_tickets=kwargs.get('with_jira_tickets'))
+        [InternalTest(test, test_params=test_params, jira_tickets=with_jira_tickets)
                          for test in failed_tests_meta if test_should_be_added(test)])
     additional_processing(tests, kwargs)
     return tests
