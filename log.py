@@ -32,7 +32,7 @@ def init_log(file_path=None):
     print(f"Session logs can be found here {file_path}")
     log_file_handler.push_application()
     log.handlers.append(log_file_handler)
-    log.handlers.append(StreamHandler(sys.stdout, level="INFO"))
+    log.handlers.append(StreamHandler(sys.stdout, level="DEBUG"))
 
 
 def _get_logs_dir():
