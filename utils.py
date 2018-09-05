@@ -27,12 +27,12 @@ def find_test_by_error(exception, with_jira_tickets=False, *send_email):
     :type exception: str
     :type send_email: str
     """
+    test_params = False if with_jira_tickets else True
     tests = get_failed_tests(error=exception, with_jira_tickets=with_jira_tickets,
-                             status=config.failed_statuses)
+                             status=config.failed_statuses, test_params=test_params)
     html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
     html_text += create_tests_table(tests)
     return handle_html_report(html_text, send_email, message=f"Results exception {exception}")
-
 
 
 @baker.command
@@ -81,9 +81,11 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
                 if test in updated_failed_tests:
                     updated_failed_tests.remove(test)
     test_and_errors = {}
+    test_params = False if with_jira_tickets else True
     all_tests = get_failed_tests(days=days,
                                  status=config.failed_statuses,
-                                 with_jira_tickets=with_jira_tickets,)
+                                 with_jira_tickets=with_jira_tickets,
+                                 test_params=test_params)
     failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
