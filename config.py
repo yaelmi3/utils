@@ -43,7 +43,7 @@ cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy", 6378)
 
 elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
 
-default_params = (('size', '4000'),)
+default_params = (('size', '8000'),)
 
 headers = {'Content-Type': 'application/json'}
 

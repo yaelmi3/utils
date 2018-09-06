@@ -63,17 +63,23 @@ def test_history(test_name):
     header = f'Stats for <a href="{config.backslash_url}#/tests?search={test_name}">{test_name}</a>'
     test_analysis = {}
     tests = get_tests(test_name=test_name, status=config.all_statuses)
-    successful_tests = [test for test in tests if test._status == "SUCCESS"]
-    failed_tests = [test for test in tests if test._status in config.failed_statuses]
-    test_analysis["Total test runs"] = len(tests)
-    test_analysis["Successful runs"] = len(successful_tests)
-    test_analysis["Failed runs"] = len(failed_tests)
-    success_ratio = int(
-        100 * float(test_analysis["Successful runs"]) / float(test_analysis["Total test runs"]))
-    test_analysis["Test ratio"] = f'{success_ratio}% success'
-    test_analysis[
-        "Last failure"] = f"Occurred on {failed_tests[0].start_time}," \
-                          f" version: {failed_tests[0].version}, link: {failed_tests[0].test_link}"
+    if tests:
+        successful_tests = [test for test in tests if test._status == "SUCCESS"]
+        failed_tests = [test for test in tests if test._status in config.failed_statuses]
+        test_analysis["Total test runs"] = len(tests)
+        test_analysis["Successful runs"] = len(successful_tests)
+        test_analysis["Failed runs"] = len(failed_tests)
+        if test_analysis["Total test runs"] > 0:
+            success_ratio = int(
+                100 * float(test_analysis["Successful runs"]) / float(test_analysis["Total test runs"]))
+        else:
+            success_ratio = 100
+        test_analysis["Test ratio"] = f'{success_ratio}% success'
+        test_analysis[
+            "Last failure"] = f"Occurred on {failed_tests[0].start_time}," \
+                              f" version: {failed_tests[0].version}, link: {failed_tests[0].test_link}"
+    else:
+        header += "<br><br> No tests were found by this name"
     return create_test_stats_table(header=header, test_analysis=test_analysis)
 
 
