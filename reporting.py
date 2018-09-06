@@ -142,7 +142,6 @@ def handle_html_report(final_html, send_email, message=None):
     return final_html
 
 
-
 def save_to_file(file_name, file_content, directory=None):
     """
     Save given data to specified path and notify about file creation
@@ -187,3 +186,14 @@ def create_errors_table(test_and_errors, updated_failed_tests):
         html_text = f"{html_text}{create_tests_table(tests)} <br>"
     return f'<h2>{len(updated_failed_tests)} failed tests were found</h2><br>' + table_of_contents(
         html_text)
+
+
+def create_test_stats_table(header, test_analysis):
+    html_text = f"{config.table_style} <h2>{header}</h2><br>"
+    for key, value in test_analysis.items():
+        html_text += "<tr>"
+        html_text += config.bold_cell_style.format(key)
+        html_text += config.cell_style.format(value)
+        html_text += "</tr>"
+    html_text += "</table>"
+    return html_text

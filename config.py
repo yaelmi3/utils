@@ -51,6 +51,8 @@ max_error_length = 50
 
 failed_statuses = ["ERROR", "FAILURE"]
 
+all_statuses = ["SUCCESS"] + failed_statuses
+
 from_address = "ymintz@infinidat.com"
 
 smtp_server = 'smtp-dev.lab.il.infinidat.com'
