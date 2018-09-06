@@ -10,7 +10,7 @@ import log
 cache = TTLCache(maxsize=40000, ttl=60 * 60 * 2)
 
 
-def get_failed_tests(**kwargs):
+def get_tests(**kwargs):
     """
     1. Get results from elastic search
     2. Convert tests to InternalTest object, in case test_params=False, the InternalTest object will
@@ -39,7 +39,7 @@ def get_failed_tests(**kwargs):
                 return True
 
     elastic_search = ElasticSearch()
-    failed_tests_meta = elastic_search.get_failed_tests_results(**kwargs)
+    failed_tests_meta = elastic_search.get_test_results(**kwargs)
     with_jira_tickets = kwargs.get('with_jira_tickets')
     test_params = kwargs.get('test_params', True)
     test_names = []
@@ -111,7 +111,6 @@ def get_jira_tickets(test):
         for repearing errors under different tests
     :type test: InternalTest
     """
-
     log.debug(f"Getting jira tickets for {test.test_name}")
     search_for_jira_tickets(test, test.test_name)
     for error in test._errors:

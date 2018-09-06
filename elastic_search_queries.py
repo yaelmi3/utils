@@ -9,6 +9,7 @@ import log
 class InternalTest(object):
     def __init__(self, backslash_test, test_params, jira_tickets):
         test_data = backslash_test['_source']
+        self._status = test_data['status']
         self._id = test_data["logical_id"]
         self.test_link = f'<a href="{config.backslash_url}#/tests/{self._id}">{self._id}</a>'
         self.test_name = test_data['test']['name']
@@ -22,7 +23,7 @@ class InternalTest(object):
             arrow.get(test_data['end_time'] - test_data['start_time'])).format('HH:mm:ss')
         self.user_name = test_data['user_email'].split('@')[0]
         self.branch = test_data['scm_local_branch'] if test_data['scm_local_branch'] else ''
-        self._errors = test_data['errors']
+        self._errors = test_data['errors'] if test_data['errors'] else []
         if jira_tickets:
             self._related_tickets = []
             self.related_tickets = ''
@@ -92,15 +93,15 @@ class ElasticSearch(object):
         log.info(f"Found {results['hits']['total']} results")
         return results['hits']['hits']
 
-    def get_failed_tests_results(self, **kwargs):
+    def get_test_results(self, **kwargs):
         """
         1. Get json query
         2. Execute query
         :rtype: dict
         """
-        failed_tests_query = get_tests_query(**kwargs)
-        log.info(f"Executing query: {failed_tests_query}")
-        return self.post_query_request(failed_tests_query)
+        tests_query = get_tests_query(**kwargs)
+        log.info(f"Executing query: {tests_query}")
+        return self.post_query_request(tests_query)
 
     def get_errors(self, error_message):
         log.info(f"Executing query for error message = {error_message}")
