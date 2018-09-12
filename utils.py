@@ -77,12 +77,11 @@ def test_history(test_name):
         else:
             success_ratio = 100
         test_analysis["test_ratio"] = f'{success_ratio}% success'
-        test_analysis["last_failure"] = last_execution.format(
-            *[getattr(failed_tests[0], value) for value in required_values])
-        test_analysis["last_success"] = last_execution.format(
-            *[getattr(successful_tests[0], value) for value in required_values])
-
-
+        for last_runs, test_group in {"last_failure": failed_tests,
+                                      "last_success": successful_tests}.items():
+            test_analysis[last_runs] = last_execution.format(
+                *[getattr(test_group[0], value) for value in
+                  required_values]) if test_group else "N/A"
     else:
         header += "<br><br> No tests were found by this name"
     return create_test_stats_table(header=header, test_analysis=test_analysis)
