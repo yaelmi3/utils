@@ -1,6 +1,6 @@
 from flask import Flask
 from collections import OrderedDict
-from flask import request, render_template
+from flask import request, render_template, redirect
 
 import log
 from ui.ui_helper import get_main_inputs, execute_command
@@ -16,7 +16,7 @@ def index():
 
 
 @app.route('/action/<selected_action>')
-def show_post(selected_action):
+def show_menu(selected_action):
     categories = get_main_inputs()
     entry = None
     for category_name, category_items in categories.items():
@@ -29,8 +29,10 @@ def show_post(selected_action):
 
 @app.route('/execute', methods=['POST', 'GET'])
 def execute():
-    result = execute_command(request.form)
-    return render_template('results.html', article=result)
+    if request.method == "POST":
+        result = execute_command(request.form)
+        return render_template('results.html', article=result)
+    return redirect('/')
 
 
 if __name__ == '__main__':
