@@ -7,7 +7,7 @@ from reporting import handle_html_report, create_tests_table, create_errors_tabl
     create_test_stats_table
 
 
-def _test_matches_requirements(test):
+def _matches_requirements(test):
     """
     Return True if test is failed and wasn't executed from local branch
     :type test: backslash.test.Test
@@ -28,7 +28,7 @@ def find_test_by_error(exception, with_jira_tickets=False, *send_email):
     :type exception: str
     :type send_email: str
     """
-    test_params = False if with_jira_tickets else True
+    test_params = not with_jira_tickets
     tests = get_tests(error=exception, with_jira_tickets=with_jira_tickets,
                       status=config.failed_statuses, test_params=test_params)
     html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
@@ -60,27 +60,33 @@ def test_history(test_name):
     Get full summary of all test executions
     :type test_name: str
     """
-    header = f'Stats for <a href="{config.backslash_url}#/tests?search={test_name}">{test_name}</a>'
+    last_execution = "Occurred on {0}, version: {1}, link: {2}, parameters: {3}"
+    required_values = ["start_time", "version", "test_link", "parameters"]
+    header = f'Stats for {config.tests_search_link.format(test_name)}'
     test_analysis = {}
     tests = get_tests(test_name=test_name, status=config.all_statuses)
     if tests:
         successful_tests = [test for test in tests if test._status == "SUCCESS"]
         failed_tests = [test for test in tests if test._status in config.failed_statuses]
-        test_analysis["Total test runs"] = len(tests)
-        test_analysis["Successful runs"] = len(successful_tests)
-        test_analysis["Failed runs"] = len(failed_tests)
-        if test_analysis["Total test runs"] > 0:
+        test_analysis["total_test_runs"] = len(tests)
+        test_analysis["successful_runs"] = len(successful_tests)
+        test_analysis["failed_runs"] = len(failed_tests)
+        if test_analysis["total_test_runs"] > 0:
             success_ratio = int(
-                100 * float(test_analysis["Successful runs"]) / float(test_analysis["Total test runs"]))
+                100 * float(test_analysis["successful_runs"]) / float(test_analysis["total_test_runs"]))
         else:
             success_ratio = 100
-        test_analysis["Test ratio"] = f'{success_ratio}% success'
-        test_analysis[
-            "Last failure"] = f"Occurred on {failed_tests[0].start_time}," \
-                              f" version: {failed_tests[0].version}, link: {failed_tests[0].test_link}"
+        test_analysis["test_ratio"] = f'{success_ratio}% success'
+        test_analysis["last_failure"] = last_execution.format(
+            *[getattr(failed_tests[0], value) for value in required_values])
+        test_analysis["last_success"] = last_execution.format(
+            *[getattr(successful_tests[0], value) for value in required_values])
+
+
     else:
         header += "<br><br> No tests were found by this name"
     return create_test_stats_table(header=header, test_analysis=test_analysis)
+
 
 
 @baker.command
@@ -101,22 +107,22 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
         """
         for error in test._errors:
 
-            if error['message'] not in config.omit_errors:
+            if error['message'] in config.omit_errors:
+                if test in updated_failed_tests:
+                    updated_failed_tests.remove(test)
+            else:
                 exception_type = process_error(error)
                 if exception_type in test_and_errors and test not in test_and_errors[exception_type]:
                     test_and_errors[exception_type].append(test)
                 else:
                     test_and_errors[exception_type] = [test]
-            else:
-                if test in updated_failed_tests:
-                    updated_failed_tests.remove(test)
     test_and_errors = {}
     test_params = False if with_jira_tickets else True
     all_tests = get_tests(days=days,
                           status=config.failed_statuses,
                           with_jira_tickets=with_jira_tickets,
                           test_params=test_params)
-    failed_tests = [test for test in all_tests if _test_matches_requirements(test)]
+    failed_tests = [test for test in all_tests if _matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
         update_errors()

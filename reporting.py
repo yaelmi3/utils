@@ -192,7 +192,7 @@ def create_test_stats_table(header, test_analysis):
     html_text = f"{config.table_style} <h2>{header}</h2><br>"
     for key, value in test_analysis.items():
         html_text += "<tr>"
-        html_text += config.bold_cell_style.format(key)
+        html_text += config.bold_cell_style.format(key.replace('_', ' ').title())
         html_text += config.cell_style.format(value)
         html_text += "</tr>"
     html_text += "</table>"
