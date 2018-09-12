@@ -20,6 +20,7 @@ log_name = "utils.log"
 
 cache_server_up = True
 
+
 def get_cache_state():
     global cache_server_up
     return cache_server_up
@@ -71,3 +72,6 @@ jira_query = 'updated > -365d' \
 
 jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0} - {1}</a>'
 
+test_link = '<a href="https://backslash.infinidat.com/#/tests/{0}">{0}</a>'
+
+tests_search_link = '<a href="https://backslash.infinidat.com/#/tests?search={0}">{0}</a>'

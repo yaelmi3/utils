@@ -11,7 +11,7 @@ class InternalTest(object):
         test_data = backslash_test['_source']
         self._status = test_data['status']
         self._id = test_data["logical_id"]
-        self.test_link = f'<a href="{config.backslash_url}#/tests/{self._id}">{self._id}</a>'
+        self.test_link = config.test_link.format(self._id)
         self.test_name = test_data['test']['name']
         if test_params:
             self.parameters = test_data['parameters']
