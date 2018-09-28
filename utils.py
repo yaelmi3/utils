@@ -1,10 +1,10 @@
 import baker
-
 import config
+import reporting
 from elastic_search_queries import process_error
 from processing_tests import get_tests
-from reporting import handle_html_report, create_tests_table, create_errors_table, \
-    create_test_stats_table
+from slash_tests import get_latest_tests
+from test_stats import get_related_tests_from_cache, divide_tests_by_filename, get_tests_stats
 
 
 def _matches_requirements(test):
@@ -19,12 +19,33 @@ def _matches_requirements(test):
 
 
 @baker.command
+def suites_overview(*send_email):
+    """
+    Obtain the latest tag and display tests grouped by their test suites
+    """
+    tag_tests = get_latest_tests()
+    tests_by_suites = {"No Suite": []}
+    if tag_tests:
+        for test_key, tests in tag_tests.items():
+            suite_names = tests[0]['test_suite']
+            if not suite_names:
+                tests_by_suites["No Suite"].append(test_key)
+            else:
+                for suite_name in suite_names:
+                    if suite_name in tests_by_suites:
+                        tests_by_suites[suite_name].append(test_key)
+                    else:
+                        tests_by_suites[suite_name] = [test_key]
+    final_html = reporting.create_suites_table(tests_by_suites)
+    return reporting.handle_html_report(final_html, send_email, message="Tests grouped by suites")
+
+
+@baker.command
 def find_test_by_error(exception, with_jira_tickets=False, *send_email):
     """
     1. Look for cache for entry with the specified exception type
     2. If entry found:
         2.1 Iterate through test id and obtain their test objects
-
     :type exception: str
     :type send_email: str
     """
@@ -32,8 +53,9 @@ def find_test_by_error(exception, with_jira_tickets=False, *send_email):
     tests = get_tests(error=exception, with_jira_tickets=with_jira_tickets,
                       status=config.failed_statuses, test_params=test_params)
     html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
-    html_text += create_tests_table(tests)
-    return handle_html_report(html_text, send_email, message=f"Results exception {exception}")
+    html_text += reporting.create_tests_table(tests)
+    return reporting.handle_html_report(html_text, send_email,
+                                        message=f"Results exception {exception}")
 
 
 @baker.command
@@ -50,42 +72,27 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     """
     tests = get_tests(test_name=test_name, error=exception,
                       status=config.failed_statuses, with_jira_tickets=with_jira_tickets)
-    html_text = create_tests_table(tests)
-    return handle_html_report(html_text, send_email, message=f"Results for test {test_name}")
+    html_text = reporting.create_tests_table(tests)
+    return reporting.handle_html_report(html_text, send_email,
+                                        message=f"Results for test {test_name}")
 
 
 @baker.command
-def test_history(test_name):
+def test_stats(test_name):
     """
     Get full summary of all test executions
     :type test_name: str
     """
-    last_execution = "Occurred on {0}, version: {1}, link: {2}, parameters: {3}"
-    required_values = ["start_time", "version", "test_link", "parameters"]
-    header = f'Stats for {config.tests_search_link.format(test_name)}'
-    test_analysis = {}
-    tests = get_tests(test_name=test_name, status=config.all_statuses)
-    if tests:
-        successful_tests = [test for test in tests if test._status == "SUCCESS"]
-        failed_tests = [test for test in tests if test._status in config.failed_statuses]
-        test_analysis["total_test_runs"] = len(tests)
-        test_analysis["successful_runs"] = len(successful_tests)
-        test_analysis["failed_runs"] = len(failed_tests)
-        if test_analysis["total_test_runs"] > 0:
-            success_ratio = int(
-                100 * float(test_analysis["successful_runs"]) / float(test_analysis["total_test_runs"]))
-        else:
-            success_ratio = 100
-        test_analysis["test_ratio"] = f'{success_ratio}% success'
-        for last_runs, test_group in {"last_failure": failed_tests,
-                                      "last_success": successful_tests}.items():
-            test_analysis[last_runs] = last_execution.format(
-                *[getattr(test_group[0], value) for value in
-                  required_values]) if test_group else "N/A"
+    html_report = ''
+    test_details = get_related_tests_from_cache(test_name)
+    queried_tests = get_tests(test_name=test_name, status=config.all_statuses)
+    if queried_tests:
+        tests_by_file_name = divide_tests_by_filename(queried_tests)
+        for file_name, tests in tests_by_file_name.items():
+            html_report += get_tests_stats(test_name, file_name, tests, test_details)
     else:
-        header += "<br><br> No tests were found by this name"
-    return create_test_stats_table(header=header, test_analysis=test_analysis)
-
+        html_report = f"<br><br> No tests were found by this name: {test_name}"
+    return html_report
 
 
 @baker.command
@@ -125,8 +132,8 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
     updated_failed_tests = failed_tests
     for test in failed_tests:
         update_errors()
-    final_html = create_errors_table(test_and_errors, updated_failed_tests)
-    return handle_html_report(final_html, send_email)
+    final_html = reporting.create_errors_table(test_and_errors, updated_failed_tests)
+    return reporting.handle_html_report(final_html, send_email)
 
 
 if __name__ == '__main__':

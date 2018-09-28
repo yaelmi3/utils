@@ -13,6 +13,7 @@ class InternalTest(object):
         self._id = test_data["logical_id"]
         self.test_link = config.test_link.format(self._id)
         self.test_name = test_data['test']['name']
+        self._file_name = test_data['test']['file_name']
         if test_params:
             self.parameters = test_data['parameters']
         self.first_error = _truncate_text(test_data['errors'][0]['message'], 120) if test_data[
@@ -21,6 +22,7 @@ class InternalTest(object):
         self.start_time = arrow.get(test_data['start_time']).format('DD-MM-YY HH:mm:ss')
         self.duration = arrow.get(
             arrow.get(test_data['end_time'] - test_data['start_time'])).format('HH:mm:ss')
+        self._duration = test_data['end_time'] - test_data['start_time']
         self.user_name = test_data['user_email'].split('@')[0]
         self.branch = test_data['scm_local_branch'] if test_data['scm_local_branch'] else ''
         self._errors = test_data['errors'] if test_data['errors'] else []

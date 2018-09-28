@@ -1,6 +1,7 @@
 from ast import literal_eval
 from collections import OrderedDict, namedtuple
 
+import config
 import utils
 
 
@@ -12,6 +13,7 @@ class Fields(object):
         self.fields = None
         self.required = False
         self.update_kwargs(kwargs)
+        self.type = None
         self.define_field_types()
 
     def define_field_types(self):
@@ -34,14 +36,28 @@ class Fields(object):
     def __repr__(self):
         return '{}: {}'.format(self.name, self.default)
 
+
 def get_main_inputs():
     all_commands = OrderedDict()
-    all_commands.update({'Queries': {}})
+    for menu_name in config.webui_menus_index:
+        all_commands.update({menu_name: {}})
     baker_commands = obtain_util_commands()
     for func_name, arguments in baker_commands.items():
-        all_commands["Queries"][func_name] = get_list_of_args(arguments)
+        menu_name = _get_menu_name(func_name)
+        if menu_name:
+            all_commands[menu_name][func_name] = get_list_of_args(arguments)
     return all_commands
 
+
+def _get_menu_name(func_name):
+    """
+    Return menu name from dict by specified func name
+    :type func_name: str
+    :rtype: str
+    """
+    for menu_name, funcs in config.webui_menus_index.items():
+        if func_name in funcs:
+            return menu_name
 
 def get_list_of_args(arguments):
     list_of_fields = {'arguments': []}

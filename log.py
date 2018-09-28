@@ -25,14 +25,15 @@ def silence_log_output():
     StreamHandler(sys.stdout, level="INFO").push_application()
 
 
-def init_log(file_path=None):
-    file_path = os.path.join(_get_logs_dir(), config.log_name) if not file_path else file_path
-    log_file_handler = FileHandler(file_path, format_string=log_format_string, bubble=True, mode='a')
-    log_file_handler.format_string = log_format_string
-    print(f"Session logs can be found here {file_path}")
-    log_file_handler.push_application()
-    log.handlers.append(log_file_handler)
-    log.handlers.append(StreamHandler(sys.stdout, level="DEBUG"))
+def init_log(log_file=True, file_path=None):
+    if log_file:
+        file_path = os.path.join(_get_logs_dir(), config.log_name) if not file_path else file_path
+        log_file_handler = FileHandler(file_path, format_string=log_format_string, bubble=True, mode='a')
+        log_file_handler.format_string = log_format_string
+        print(f"Session logs can be found here {file_path}")
+        log_file_handler.push_application()
+        log.handlers.append(log_file_handler)
+    log.handlers.append(StreamHandler(sys.stdout, level="DEBUG", format_string=log_format_string))
 
 
 def _get_logs_dir():

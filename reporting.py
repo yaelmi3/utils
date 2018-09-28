@@ -134,10 +134,10 @@ def _get_table_headers(tests):
     return f"<tr>{headers}</tr>"
 
 
-def handle_html_report(final_html, send_email, message=None):
+def handle_html_report(final_html, send_email, save_as_file=False, message=None):
     if send_email:
         generate_html_report(final_html, send_email, message)
-    else:
+    if save_as_file:
         save_to_file(f"tests_{time.time()}.html", final_html)
     return final_html
 
@@ -188,12 +188,23 @@ def create_errors_table(test_and_errors, updated_failed_tests):
         html_text)
 
 
-def create_test_stats_table(header, test_analysis):
+def create_suites_table(tests_by_suites):
+    html_text = f"{config.table_style} <h2>Tests grouped by suites</h2><br>"
+    for suite_name, test_list in tests_by_suites.items():
+        html_text += f"<h3 id={suite_name} tag={suite_name}>{suite_name} ({len(test_list)})</h3>"
+        html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
+        html_text += "</table>"
+    return table_of_contents(html_text)
+
+
+def create_test_stats_table(header, test_analysis, note):
     html_text = f"{config.table_style} <h2>{header}</h2><br>"
+    if note:
+        html_text += f'<font color="red">*** {note}</font>'
     for key, value in test_analysis.items():
         html_text += "<tr>"
         html_text += config.bold_cell_style.format(key.replace('_', ' ').title())
         html_text += config.cell_style.format(value)
         html_text += "</tr>"
-    html_text += "</table>"
+    html_text += "</table> <br>"
     return html_text
