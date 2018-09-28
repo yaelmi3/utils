@@ -75,3 +75,7 @@ jira_link = '<a href="https://jira.infinidat.com/browse/{0}">{0} - {1}</a>'
 test_link = '<a href="https://backslash.infinidat.com/#/tests/{0}">{0}</a>'
 
 tests_search_link = '<a href="https://backslash.infinidat.com/#/tests?search={0}">{0}</a>'
+
+webui_menus_index = {"Queries": ["obtain_all_test_errors", "test_stats", "get_failed_tests_by_name", "find_test_by_error"],
+                     "Reports": ["suites_overview"]}
+

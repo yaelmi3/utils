@@ -12,11 +12,6 @@ REDIS_PORT = 6378
 log = Logger(__name__)
 
 
-def pickle_result(func):
-  def wrapped(*args, **kwargs):
-    return pickle.dumps(func(*args, **kwargs))
-
-
 class CacheServer(rpyc.Service):
     def __init__(self, *args):
         self.r_server = redis.Redis()
@@ -24,7 +19,7 @@ class CacheServer(rpyc.Service):
     def on_connect(self):
         log.info("Remote connection accepted")
 
-    def exposed_add_to_cache(self, key_name, data, days_to_keep=30):
+    def exposed_add_to_cache(self, key_name, data, days_to_keep=None):
         """
         If overwrite data is enabled, add the key to cache
         if overwrite data is False, check whether the key

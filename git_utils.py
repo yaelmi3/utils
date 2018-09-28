@@ -22,6 +22,16 @@ def base_branch(git):
         git.checkout(current_branch)
 
 
+def get_git_instance(working_tree_dir):
+    repo = Repo(working_tree_dir)
+    return repo.git
+
+
+def get_latest_tag(working_tree_dir):
+    git = get_git_instance(working_tree_dir)
+    return git.describe()
+
+
 @baker.command
 def mass_cherry_pick(source_branch, working_tree_dir, *branch_list):
     """
@@ -34,8 +44,7 @@ def mass_cherry_pick(source_branch, working_tree_dir, *branch_list):
     :type working_tree_dir: str
     :type branch_list: list
     """
-    repo = Repo(working_tree_dir)
-    git = repo.git
+    git = get_git_instance(working_tree_dir)
     with base_branch(git):
         required_commit = get_required_commit(git, source_branch)
         log.info(f"Cherry-picking commit: {required_commit}")

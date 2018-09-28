@@ -15,7 +15,7 @@ def connect_to_cache():
             log.error(f"Failed to connect to redis server: {e}")
 
 
-def add_to_cache(key_name, data, days_to_keep=30):
+def add_to_cache(key_name, data, days_to_keep=None):
     """
     1. Serialize given object
     2. Send object to cache server
@@ -68,3 +68,13 @@ def get_from_cache(key_name):
             return pickle.loads(pickled_object)
 
 
+def redis_cache(func):
+    def wrapper(*args, **kwargs):
+        key_name = args[0]
+        result = get_from_cache(key_name)
+        if result:
+            return result
+        result = func(*args, **kwargs)
+        add_to_cache(key_name, result)
+        return result
+    return wrapper
