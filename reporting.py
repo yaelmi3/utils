@@ -8,6 +8,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
+
 import dominate
 from bs4 import BeautifulSoup
 from dominate import tags
@@ -208,3 +209,20 @@ def create_test_stats_table(header, test_analysis, note):
         html_text += "</tr>"
     html_text += "</table> <br>"
     return html_text
+
+
+def create_test_blockers_table(test_blockers):
+    html_text = "<h2>Test Blockers</h2><br>"
+    for blocker_status, blocked_tests in test_blockers.items():
+        html_text += f"<h3 id={blocker_status} tag={blocker_status}>{blocker_status} ({len(blocked_tests)})</h3>"
+        html_text +=  f"{config.table_style}"
+        html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in blocked_tests[0].keys() if not value.startswith('_')])}" \
+                     f"</tr>"
+        for test in blocked_tests:
+            html_text += "<tr>"
+            html_text += ''.join(
+                [config.cell_style.format(value) for _, value in test.items()])
+            html_text += "</tr>"
+        html_text += "</table>"
+    return table_of_contents(html_text)
+
