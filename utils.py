@@ -44,7 +44,8 @@ def show_jira_blockers(*send_email):
                     blocked_tests[status] = [
                         {'test': test_key, 'test_blocker': config.jira_link.format(test_blocker),
                          'status': status}]
-        return reporting.create_test_blockers_table(blocked_tests)
+        html_text = reporting.create_test_blockers_table(blocked_tests)
+        return reporting.handle_html_report(html_text, send_email)
 
 
 @baker.command
