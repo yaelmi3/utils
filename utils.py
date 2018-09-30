@@ -1,8 +1,9 @@
 import baker
+
 import config
 import reporting
 from elastic_search_queries import process_error
-from processing_tests import get_tests
+from processing_tests import get_tests, get_ticket_status
 from slash_tests import get_latest_tests
 from test_stats import get_related_tests_from_cache, divide_tests_by_filename, get_tests_stats
 
@@ -16,6 +17,35 @@ def _matches_requirements(test):
     return test.test_name.startswith('test_') and not [branch_name for branch_name in
                                                        config.ignore_branches if
                                                        branch_name in test.branch]
+
+def _get_test_blocker(test):
+    return test['tags'][test['tags'].index('jira-blocker') + 1]
+
+
+@baker.command
+def show_jira_blockers(*send_email):
+    """
+    Display all tests that are currently blocked and sort them by ticket statuses
+    :type send_email: tuple
+    :rtype: str
+    """
+    tests = get_latest_tests()
+    if tests:
+        blocked_tests = {}
+        for test_key, test_list in tests.items():
+            if 'jira-blocker' in test_list[0]['tags']:
+                test_blocker = _get_test_blocker(test_list[0])
+                status = get_ticket_status(test_blocker)
+                if status in blocked_tests:
+                    blocked_tests[status].append(
+                        {'test': test_key, 'test_blocker': config.jira_link.format(test_blocker),
+                         'status': status})
+                else:
+                    blocked_tests[status] = [
+                        {'test': test_key, 'test_blocker': config.jira_link.format(test_blocker),
+                         'status': status}]
+        html_text = reporting.create_test_blockers_table(blocked_tests)
+        return reporting.handle_html_report(html_text, send_email)
 
 
 @baker.command

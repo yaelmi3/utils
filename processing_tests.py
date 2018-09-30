@@ -122,5 +122,11 @@ def get_jira_tickets(test):
     search_for_jira_tickets(test, test._id)
     if test._related_tickets:
         test.related_tickets = '    '.join(
-            {config.jira_link.format(ticket.key, ticket.get_resolution()) for ticket in
+            {config.jira_link_status.format(ticket.key, ticket.get_resolution()) for ticket in
              test._related_tickets})
+
+
+@cached(cache)
+def get_ticket_status(test_blocker):
+    with log.silence_log_output():
+        return client.get_issue(test_blocker).get_status()
