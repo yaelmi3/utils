@@ -1,4 +1,5 @@
 import baker
+from collections import OrderedDict
 
 import config
 import reporting
@@ -44,7 +45,8 @@ def show_jira_blockers(*send_email):
                     blocked_tests[status] = [
                         {'test': test_key, 'test_blocker': config.jira_link.format(test_blocker),
                          'status': status}]
-        html_text = reporting.create_test_blockers_table(blocked_tests)
+        sorted_blocked_tests = OrderedDict(sorted(blocked_tests.items(), reverse=True))
+        html_text = reporting.create_test_blockers_table(sorted_blocked_tests)
         return reporting.handle_html_report(html_text, send_email)
 
 
