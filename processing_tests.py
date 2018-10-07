@@ -129,4 +129,5 @@ def get_jira_tickets(test):
 @cached(cache)
 def get_ticket_status(test_blocker):
     with log.silence_log_output():
-        return client.get_issue(test_blocker).get_status()
+        issue = client.get_issue(test_blocker)
+        return f"{issue.get_status()} - {issue.get_resolution()}"
