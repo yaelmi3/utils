@@ -40,7 +40,7 @@ bold_cell_style = '<th class="tg-yw4l"><b>{}</b></th>'
 
 table_footer = "</table>"
 
-cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy", 6378)
+cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy.lab.gdc.il.infinidat.com", 6378)
 
 elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
 
