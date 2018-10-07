@@ -212,7 +212,7 @@ def create_test_stats_table(header, test_analysis, note):
 
 
 def create_test_blockers_table(test_blockers):
-    html_text = "<h2>Test Blockers</h2><br>"
+    html_text = f"<h2>Test Blockers - {sum(len(blockers) for blockers in test_blockers.values())}</h2><br>"
     for blocker_status, blocked_tests in test_blockers.items():
         html_text += f"<h3 id={blocker_status} tag={blocker_status}>{blocker_status} ({len(blocked_tests)})</h3>"
         html_text +=  f"{config.table_style}"
