@@ -16,3 +16,4 @@ ecosystem
 cachetools
 gunicorn
 gevent
+plotly
