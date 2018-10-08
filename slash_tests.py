@@ -114,9 +114,12 @@ def _update_latest_tag_in_cache(current_tag_ver):
     2. If the current tag ver is greater than latest, update it
     :type current_tag_ver: dict
     """
-    latest_tag_ver = get_from_cache("latest_tag")
-    if not latest_tag_ver or current_tag_ver['tag_main_ver'] < current_tag_ver['tag_main_ver'] or \
-            current_tag_ver['tag_revision'] < current_tag_ver['tag_revision']:
+    latest_tag_ver_str = get_from_cache("latest_tag")
+    latest_tag_ver = ast.literal_eval(latest_tag_ver_str)
+    if not latest_tag_ver or \
+            int(current_tag_ver['tag_main_ver']) > int(latest_tag_ver['tag_main_ver']) or \
+                (int(current_tag_ver['tag_revision']) > int(latest_tag_ver['tag_revision']) and
+                    int(current_tag_ver['tag_main_ver']) == int(latest_tag_ver['tag_main_ver'])):
         log.info(f"Current tag {current_tag_ver} is more up to the date that the saved: {latest_tag_ver}")
         add_to_cache("latest_tag", str(current_tag_ver), days_to_keep=20)
     else:
@@ -126,7 +129,7 @@ def _update_latest_tag_in_cache(current_tag_ver):
 def get_latest_tests():
     latest_tag = get_from_cache("latest_tag")
     if latest_tag:
-        return get_from_cache(latest_tag)
+        return get_from_cache(str(latest_tag))
 
 if __name__ == '__main__':
     log.init_log(log_file=False)
