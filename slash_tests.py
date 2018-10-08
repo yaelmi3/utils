@@ -101,22 +101,27 @@ def get_updated_tests(working_tree_dir, env_dir):
     :rtype: list
     """
     git_tag = get_latest_tag(working_tree_dir)
-    tag_ver = git_tag.split('.',1)[0]
+    tag_main_ver = git_tag.split('.',1)[0]
+    tag_revision = git_tag.split('-')[1]
+    tag_ver = f"{tag_main_ver}.{tag_revision}"
     os.environ["INFINIBOX_TESTS"] = working_tree_dir
     os.environ["ENV_PATH"] = os.path.join(env_dir, 'bin/activate')
-    tests = get_all_tests(tag_ver, working_tree_dir)
-    _update_latest_tag_in_cache(int(tag_ver))
+    get_all_tests(tag_ver, working_tree_dir)
+    _update_latest_tag_in_cache(float(tag_ver))
 
 
-def _update_latest_tag_in_cache(tag_ver):
+def _update_latest_tag_in_cache(current_tag_ver):
     """
     1. Get latest tag from cache
     2. If the current tag ver is greater than latest, update it
-    :type tag_ver: int
+    :type current_tag_ver: float
     """
     latest_tag_ver = get_from_cache("latest_tag")
-    if not latest_tag_ver or int(latest_tag_ver) < tag_ver:
-        add_to_cache("latest_tag", tag_ver)
+    if not latest_tag_ver or float(latest_tag_ver) < current_tag_ver:
+        log.info(f"Current tag {current_tag_ver} is more up to the date that the saved: {latest_tag_ver}")
+        add_to_cache("latest_tag", current_tag_ver, days_to_keep=20)
+    else:
+        log.info(f"Saved tag {latest_tag_ver} is already up to date. Current tag: {current_tag_ver}")
 
 
 def get_latest_tests():
