@@ -17,3 +17,4 @@ cachetools
 gunicorn
 gevent
 plotly
+colorlover

@@ -8,14 +8,13 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
-
 import dominate
 from bs4 import BeautifulSoup
 from dominate import tags
 
 import config
 import log
-from graphs import create_graph_bar
+from graphs import create_graph_bar, create_pie_chart, create_2_columns_table, create_generic_table
 
 
 def generate_html_report(html, recipients, message):
@@ -158,23 +157,27 @@ def save_to_file(file_content, file_name=None):
     return file_path
 
 
-def create_tests_table(tests):
+def create_tests_table(tests, header=''):
     """
     Generate html table as string, using predefined styles
     :type tests: list(backslash.test.Test)
+    :type header: str
     :rtype: str
     """
+    index = 0
     html_text = config.table_style
     if tests:
         cell = config.cell_style
-        html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in tests[0].__dict__.keys() if not value.startswith('_')])}</tr>"
-        for test in tests:
+        for index, test in enumerate(tests):
+            if index == 0:
+                html_text += f"<tr>{''.join([config.bold_cell_style.format(value.title()) for value in test.__dict__.keys() if not value.startswith('_')])}</tr>"
             html_text += "<tr>"
             html_text += ''.join(
                 [cell.format(value) for key, value in test.__dict__.items() if not key.startswith('_')])
             html_text += "</tr>"
         html_text += "</table>"
-        return html_text
+        header += f"<b> {index} tests</b><br>"
+        return header + html_text
     log.error("Could not find tests that match the query")
     return ''
 
@@ -191,7 +194,7 @@ def create_errors_table(test_and_errors, updated_failed_tests):
 
 def create_suites_table(tests_by_suites):
     html_text = f"{config.table_style} <h2>Tests grouped by suites</h2><br>"
-    html_text += create_graph_bar(tests_by_suites)
+    html_text += create_graph_bar({key_name: len(members) for key_name, members in tests_by_suites.items()})
     for suite_name, test_list in tests_by_suites.items():
         html_text += f"<h3 id={suite_name} tag={suite_name}>{suite_name} ({len(test_list)})</h3>"
         html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
@@ -204,6 +207,7 @@ def create_tests_list(test_list, header):
     html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
     html_text += "</table>"
     return html_text
+
 
 def create_test_stats_table(header, test_analysis, note):
     html_text = f"{config.table_style} <h2>{header}</h2><br>"
@@ -220,7 +224,7 @@ def create_test_stats_table(header, test_analysis, note):
 
 def create_test_blockers_table(test_blockers):
     html_text = f"<h2>Test Blockers - {sum(len(blockers) for blockers in test_blockers.values())}</h2><br>"
-    html_text += create_graph_bar(test_blockers)
+    html_text += create_graph_bar({key_name: len(members) for key_name, members in test_blockers.items()})
     for blocker_status, blocked_tests in test_blockers.items():
         html_text += f"<h3 id={blocker_status} tag={blocker_status}>{blocker_status} ({len(blocked_tests)})</h3>"
         html_text +=  f"{config.table_style}"
@@ -234,3 +238,48 @@ def create_test_blockers_table(test_blockers):
         html_text += "</table>"
     return table_of_contents(html_text)
 
+
+def create_coverage_report(header, coverage_data, errors):
+    html_text = f"<h2>{header}</h2><br>"
+    html_text += f"<h3 id=coverage tag=coverage>" \
+                 f"Coverage: {calculate_coverage(coverage_data)}%</h3>"
+    html_text += create_pie_chart(
+        labels=[label_name.title() for label_name in coverage_data.keys()],
+        values=[len(values) for values in coverage_data.values()])
+
+    html_text += f"<h3 id=errors_ratio tag=errors_ratio>Total Errors</h3>"
+    html_text += create_2_columns_table(["Error Name", "Occurrences"], errors)
+
+    for key_name in ["flaky", "Last_10_SUCCESS", "Last_10_ERROR"]:
+        if coverage_data[key_name]:
+            html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
+            updated_tests = _adjust_tests_to_table(coverage_data, key_name)
+            html_text += create_generic_table(["Test Name", "Success", "Failure"],
+                                              [sub_data for sub_data in updated_tests],
+                                              len(updated_tests[0]))
+
+    for key_name in ['not_executed', 'blocked']:
+        if coverage_data[key_name]:
+            html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
+            html_text += create_generic_table(["Test Name"], [coverage_data[key_name]], len(coverage_data[key_name]))
+
+    for key_name in ["SUCCESS", "ERROR"]:
+        if coverage_data[key_name]:
+            html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
+            html_text += create_2_columns_table(["Test Name", "Occurrences"],
+                                                {test_name: len(tests) for test_name, tests in
+                                                 coverage_data[key_name].items()})
+
+    return table_of_contents(html_text)
+
+
+def _adjust_tests_to_table(coverage_data, key_name):
+    return [[full_test.split(":")[1] for full_test in coverage_data[key_name].keys()]] +\
+                          [[status["SUCCESS"] for status in coverage_data[key_name].values()]] +\
+                          [[status["FAILURE"] for status in coverage_data[key_name].values()]]
+
+def calculate_coverage(coverage_data):
+    total = sum([len(values) for _, values in coverage_data.items()])
+    executed = sum([len(values) for key_name, values in coverage_data.items() if
+                    key_name != "not_executed" and key_name != "blocked"])
+    return int(executed/total * 100)

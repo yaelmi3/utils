@@ -44,7 +44,9 @@ cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy.lab.gdc
 
 elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
 
-default_params = (('size', '8000'),)
+page_scroll_format = "?scroll={}m"
+
+default_params = (('size', '10000'),)
 
 headers = {'Content-Type': 'application/json'}
 
@@ -79,6 +81,11 @@ test_link = '<a href="https://backslash.infinidat.com/#/tests/{0}">{0}</a>'
 tests_search_link = '<a href="https://backslash.infinidat.com/#/tests?search={0}">{0}</a>'
 
 webui_menus_index = {"Queries": ["obtain_all_test_errors", "test_stats", "get_failed_tests_by_name", "find_test_by_error"],
-                     "Reports": ["suites_overview", "show_jira_blockers", "find_tests_by_name_in_repo"]}
+                     "Reports": ["coverage_by_version", "suites_overview", "show_jira_blockers", "find_tests_by_name_in_repo"]}
 
 webui_ignore_vararg_list = ["send_email"]
+
+
+max_tests_to_keep = 100
+definite_executions_threshold = 10
+
