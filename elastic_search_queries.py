@@ -57,7 +57,7 @@ def get_tests_query(**kwargs):
     """
     Query = namedtuple('Query', 'operation field')
     supported_keys = {"test_name": Query("match", "test.name"),
-                      'error': Query("match", "errors.message"),
+                      'error': Query("match_phrase", "errors.message"),
                       'days': Query("range", "updated_at"),
                       'status': Query('terms', 'status')
                       }
