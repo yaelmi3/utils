@@ -40,6 +40,8 @@ def get_tests(**kwargs):
 
     elastic_search = ElasticSearch()
     failed_tests_meta = elastic_search.get_test_results(**kwargs)
+    if kwargs.get('error'):
+        failed_tests_meta = get_exact_errors_strings(kwargs['error'], failed_tests_meta)
     with_jira_tickets = kwargs.get('with_jira_tickets')
     test_params = kwargs.get('test_params', True)
     test_names = []
@@ -48,6 +50,10 @@ def get_tests(**kwargs):
                          for test in failed_tests_meta if test_should_be_added(test)])
     additional_processing(tests, kwargs)
     return tests
+
+
+def get_exact_errors_strings(error_str, tests_meta):
+    return [test_meta for test_meta in tests_meta if error_str in str(test_meta['_source']['errors'])]
 
 
 def additional_processing(tests, kwargs):
