@@ -15,6 +15,7 @@ from dominate import tags
 
 import config
 import log
+from graphs import create_graph_bar
 
 
 def generate_html_report(html, recipients, message):
@@ -191,6 +192,7 @@ def create_errors_table(test_and_errors, updated_failed_tests):
 
 def create_suites_table(tests_by_suites):
     html_text = f"{config.table_style} <h2>Tests grouped by suites</h2><br>"
+    html_text += create_graph_bar(tests_by_suites)
     for suite_name, test_list in tests_by_suites.items():
         html_text += f"<h3 id={suite_name} tag={suite_name}>{suite_name} ({len(test_list)})</h3>"
         html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
@@ -213,6 +215,7 @@ def create_test_stats_table(header, test_analysis, note):
 
 def create_test_blockers_table(test_blockers):
     html_text = f"<h2>Test Blockers - {sum(len(blockers) for blockers in test_blockers.values())}</h2><br>"
+    html_text += create_graph_bar(test_blockers)
     for blocker_status, blocked_tests in test_blockers.items():
         html_text += f"<h3 id={blocker_status} tag={blocker_status}>{blocker_status} ({len(blocked_tests)})</h3>"
         html_text +=  f"{config.table_style}"

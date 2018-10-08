@@ -47,7 +47,7 @@ def show_jira_blockers(*send_email):
                          'status': status}]
         sorted_blocked_tests = OrderedDict(sorted(blocked_tests.items(), reverse=True))
         html_text = reporting.create_test_blockers_table(sorted_blocked_tests)
-        return reporting.handle_html_report(html_text, send_email)
+        return reporting.handle_html_report(html_text, send_email, message="Latest test blockers")
 
 
 @baker.command
