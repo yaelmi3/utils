@@ -19,6 +19,7 @@ class InternalTest(object):
         self.first_error = _truncate_text(test_data['errors'][0]['message'], 120) if test_data[
             'errors'] else ''
         self.version = test_data['subjects'][0]['version']
+        self.system = test_data['subjects'][0]['name']
         self.start_time = arrow.get(test_data['start_time']).format('DD-MM-YY HH:mm:ss')
         self.duration = arrow.get(
             arrow.get(test_data['end_time'] - test_data['start_time'])).format('HH:mm:ss')
