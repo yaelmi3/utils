@@ -70,6 +70,8 @@ def get_tests_query(**kwargs):
             else:
                 search_value = kwargs[query]
             tests_query['query']['bool']['must'].append({query_value.operation: {query_value.field: search_value}})
+    if kwargs.get("include_simulator") is False:
+        tests_query['query']['bool']['must_not'] = [{"match": {"subjects.name": "simulator_1"}}]
     return tests_query
 
 
