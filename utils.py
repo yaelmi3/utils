@@ -73,17 +73,21 @@ def suites_overview(*send_email):
 
 
 @baker.command
-def find_test_by_error(exception, with_jira_tickets=False, *send_email):
+def find_test_by_error(exception, with_jira_tickets=False, include_simulator=False, *send_email):
     """
     1. Look for cache for entry with the specified exception type
     2. If entry found:
         2.1 Iterate through test id and obtain their test objects
     :type exception: str
     :type send_email: str
+    :type include_simulator: bool
     """
     test_params = not with_jira_tickets
-    tests = get_tests(error=exception, with_jira_tickets=with_jira_tickets,
-                      status=config.failed_statuses, test_params=test_params)
+    tests = get_tests(error=exception,
+                      with_jira_tickets=with_jira_tickets,
+                      status=config.failed_statuses,
+                      test_params=test_params,
+                      include_simulator=include_simulator)
     html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
     html_text += reporting.create_tests_table(tests)
     return reporting.handle_html_report(html_text, send_email,
@@ -91,7 +95,8 @@ def find_test_by_error(exception, with_jira_tickets=False, *send_email):
 
 
 @baker.command
-def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False, *send_email):
+def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
+                             include_simulator=False, *send_email):
     """
     1. Get all failed tests objects
     2. Create html table
@@ -100,24 +105,29 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     :type test_name: str
     :type exception: str
     :type with_jira_tickets: bool
+    :type include_simulator: bool
     :type send_email: tuple
     """
     tests = get_tests(test_name=test_name, error=exception,
-                      status=config.failed_statuses, with_jira_tickets=with_jira_tickets)
+                      status=config.failed_statuses,
+                      with_jira_tickets=with_jira_tickets,
+                      include_simulator=include_simulator)
     html_text = reporting.create_tests_table(tests)
     return reporting.handle_html_report(html_text, send_email,
                                         message=f"Results for test {test_name}")
 
 
 @baker.command
-def test_stats(test_name):
+def test_stats(test_name, include_simulator=False):
     """
     Get full summary of all test executions
     :type test_name: str
+    :type include_simulator: bool
     """
     html_report = ''
     test_details = get_related_tests_from_cache(test_name)
-    queried_tests = get_tests(test_name=test_name, status=config.all_statuses)
+    queried_tests = get_tests(test_name=test_name, status=config.all_statuses,
+                              include_simulator=include_simulator)
     if queried_tests:
         tests_by_file_name = divide_tests_by_filename(queried_tests)
         for file_name, tests in tests_by_file_name.items():
@@ -128,7 +138,7 @@ def test_stats(test_name):
 
 
 @baker.command
-def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
+def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=False, *send_email):
     """
     1. Get latest sessions
     2. get all tests in the list
@@ -159,7 +169,8 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, *send_email):
     all_tests = get_tests(days=days,
                           status=config.failed_statuses,
                           with_jira_tickets=with_jira_tickets,
-                          test_params=test_params)
+                          test_params=test_params,
+                          include_simulator=include_simulator)
     failed_tests = [test for test in all_tests if _matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
