@@ -80,7 +80,7 @@ def suites_overview(*send_email):
 
 
 @baker.command
-def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False):
+def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, include_dir_names=True):
     """
     Locate all tests in repo that contain specified string and (optionally) generate a suite file
      from these tests
@@ -88,9 +88,11 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False):
     tag_tests = get_latest_tests()
     file_name = ''
     if tag_tests:
-        selected_tests = set(test_key for test_key, tests in tag_tests.items() if
-                             partial_test_name in test_key and partial_test_name in tests[0][
-                                 'test_name'])
+        if include_dir_names:
+            selected_tests = set(test_key for test_key, tests in tag_tests.items() if
+                                 partial_test_name in test_key and partial_test_name in tests[0]['test_name'])
+        else:
+            selected_tests = set(test_key for test_key, _ in tag_tests.items() if partial_test_name in test_key)
         if create_suite_file:
             suite_tests = '\n'.join(selected_tests)
             file_path = reporting.save_to_file(f"{partial_test_name}_{int(time.time())}.suite",
