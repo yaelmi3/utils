@@ -5,7 +5,11 @@
 
 <body>
     <p><a href="/">Back</a></p>
-    <div>{{article|safe}}</div>
+    {%if file_name%}
+        <p><a href="/uploads/{{file_name}}">Download file: {{file_name}}</a></p>
+    {% endif %}
+    <div>{{html_text|safe}}</div>
+
 </body>
 {% endblock %}
 </html>

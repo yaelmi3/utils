@@ -1,12 +1,16 @@
+import tempfile
+import os
 from flask import Flask
 from collections import OrderedDict
-from flask import request, render_template, redirect
+from flask import request, render_template, redirect, send_from_directory, current_app
 
 import log
 from ui.ui_helper import get_main_inputs, execute_command
 
 app = Flask(__name__)
 log.init_log()
+
+app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 
 
 @app.route('/')
@@ -31,8 +35,13 @@ def show_menu(selected_action):
 def execute():
     if request.method == "POST":
         result = execute_command(request.form)
-        return render_template('results.html', article=result)
+        return render_template('results.html', html_text=result.html_text, file_name=result.file_name)
     return redirect('/')
+
+
+@app.route('/uploads/<path:filename>', methods=['GET', 'POST'])
+def download(filename):
+    return send_from_directory(directory=app.config['UPLOAD_FOLDER'], filename=filename)
 
 
 if __name__ == '__main__':

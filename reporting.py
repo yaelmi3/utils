@@ -156,7 +156,7 @@ def save_to_file(file_name, file_content, directory=None):
     with open(file_path, 'w') as file_handle:
         file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")
-    return file_content
+    return file_path
 
 
 def create_tests_table(tests):
@@ -199,6 +199,12 @@ def create_suites_table(tests_by_suites):
         html_text += "</table>"
     return table_of_contents(html_text)
 
+
+def create_tests_list(test_list, header):
+    html_text = f"{config.table_style} <h2>{header}</h2><br>"
+    html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
+    html_text += "</table>"
+    return html_text
 
 def create_test_stats_table(header, test_analysis, note):
     html_text = f"{config.table_style} <h2>{header}</h2><br>"
