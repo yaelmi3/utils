@@ -89,10 +89,10 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, inclu
     file_name = ''
     if tag_tests:
         if include_dir_names:
+            selected_tests = set(test_key for test_key, _ in tag_tests.items() if partial_test_name in test_key)
+        else:
             selected_tests = set(test_key for test_key, tests in tag_tests.items() if
                                  partial_test_name in test_key and partial_test_name in tests[0]['test_name'])
-        else:
-            selected_tests = set(test_key for test_key, _ in tag_tests.items() if partial_test_name in test_key)
         if create_suite_file:
             suite_tests = '\n'.join(selected_tests)
             file_path = reporting.save_to_file(f"{partial_test_name}_{int(time.time())}.suite",
