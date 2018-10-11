@@ -2,10 +2,12 @@ import tempfile
 import os
 from flask import Flask
 from collections import OrderedDict
-from flask import request, render_template, redirect, send_from_directory, current_app
+from flask import request, render_template, redirect, send_from_directory
+from reporting import save_to_file
 
 import log
 from ui.ui_helper import get_main_inputs, execute_command
+
 
 app = Flask(__name__)
 log.init_log()
@@ -35,8 +37,17 @@ def show_menu(selected_action):
 def execute():
     if request.method == "POST":
         result = execute_command(request.form)
-        return render_template('results.html', html_text=result.html_text, file_name=result.file_name)
+        if request.form.get('save_static_link'):
+            file_name = os.path.basename(result.html)
+            return redirect(f'/display_file_link/{file_name}')
+        return render_template('results.html', html_text=result.html, file_name=result.file_name)
     return redirect('/')
+
+
+@app.route('/display_file_link/<file_name>')
+def display_file_link(file_name):
+    html_text = open(os.path.join(app.config['UPLOAD_FOLDER'], file_name), 'r').read()
+    return render_template('results.html', html_text=html_text, file_name='')
 
 
 @app.route('/uploads/<path:filename>', methods=['GET', 'POST'])

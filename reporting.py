@@ -136,23 +136,22 @@ def _get_table_headers(tests):
     return f"<tr>{headers}</tr>"
 
 
-def handle_html_report(final_html, send_email, save_as_file=False, message=None):
+def handle_html_report(final_html, send_email=None, save_as_file=False, message=None):
     if send_email:
         generate_html_report(final_html, send_email, message)
     if save_as_file:
-        save_to_file(f"tests_{time.time()}.html", final_html)
+        return save_to_file(final_html, f"tests_{time.time()}.html")
     return final_html
 
 
-def save_to_file(file_name, file_content, directory=None):
+def save_to_file(file_content, file_name=None):
     """
     Save given data to specified path and notify about file creation
     :type file_name: str
     :type file_content: str
-    :type directory
     """
-    dest_dir = directory if directory else tempfile.gettempdir()
-    file_path = os.path.join(dest_dir, file_name)
+    file_path = os.path.join(tempfile.gettempdir(),
+                             file_name) if file_name else f"{tempfile.NamedTemporaryFile(delete=False).name}.html"
     with open(file_path, 'w') as file_handle:
         file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")

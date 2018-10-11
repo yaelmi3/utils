@@ -24,9 +24,6 @@ input.break {
   {% endif %}
   <form name="execute" action="{{ url_for('execute') }}" onsubmit="return(validateForm())" enctype="multipart/form-data" method="POST">
     <dl>
-        {% if 'flags' in entry %}
-            <input type="button" onclick="toggle_visibility('kwargs_fields', 'toggle_options');toggle_visibility('flags', 'toggle_options')" id="toggle_options" value="Show Flags"><br><br>
-        {% endif %}
         {% for category in entry %}
             {% if category != 'arguments' %}
                 <fieldset id="{{category}}" style="display:none">

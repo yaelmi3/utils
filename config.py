@@ -80,3 +80,4 @@ tests_search_link = '<a href="https://backslash.infinidat.com/#/tests?search={0}
 webui_menus_index = {"Queries": ["obtain_all_test_errors", "test_stats", "get_failed_tests_by_name", "find_test_by_error"],
                      "Reports": ["suites_overview", "show_jira_blockers", "find_tests_by_name_in_repo"]}
 
+webui_ignore_vararg_list = ["send_email"]
