@@ -59,6 +59,7 @@ def _get_menu_name(func_name):
         if func_name in funcs:
             return menu_name
 
+
 def get_list_of_args(arguments):
     list_of_fields = {'arguments': []}
     default = ''
@@ -69,7 +70,7 @@ def get_list_of_args(arguments):
         if arg not in arguments.keywords:
             fields.required = True
         list_of_fields['arguments'].append(fields)
-    if arguments.has_varargs:
+    if arguments.has_varargs and arguments.varargs_name not in config.webui_ignore_vararg_list:
         fields = Fields(name=arguments.varargs_name)
         list_of_fields['arguments'].append(fields)
     return list_of_fields

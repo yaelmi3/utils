@@ -11,7 +11,7 @@ from processing_tests import get_tests, get_ticket_status
 from slash_tests import get_latest_tests
 from test_stats import get_related_tests_from_cache, divide_tests_by_filename, get_tests_stats
 
-COMMAND_OUTPUT = namedtuple("CommandOutput", 'html_text file_name')
+COMMAND_OUTPUT = namedtuple("CommandOutput", 'html file_name')
 
 
 def _matches_requirements(test):
@@ -30,10 +30,10 @@ def _get_test_blocker(test):
 
 
 @baker.command
-def show_jira_blockers(*send_email):
+def show_jira_blockers(save_static_link=False):
     """
     Display all tests that are currently blocked and sort them by ticket statuses
-    :type send_email: tuple
+    :type save_static_link: str
     :rtype: str
     """
     tests = get_latest_tests()
@@ -53,11 +53,12 @@ def show_jira_blockers(*send_email):
                          'status': status}]
         sorted_blocked_tests = OrderedDict(sorted(blocked_tests.items(), reverse=True))
         html_text = reporting.create_test_blockers_table(sorted_blocked_tests)
-        return COMMAND_OUTPUT(reporting.handle_html_report(html_text, send_email, message="Latest test blockers"), '')
+        return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
+                                                           message="Latest test blockers"), '')
 
 
 @baker.command
-def suites_overview(*send_email):
+def suites_overview(save_static_link=False):
     """
     Obtain the latest tag and display tests grouped by their test suites
     """
@@ -76,11 +77,13 @@ def suites_overview(*send_email):
                         tests_by_suites[suite_name] = [test_key]
     final_html = reporting.create_suites_table(tests_by_suites)
     return COMMAND_OUTPUT(
-        reporting.handle_html_report(final_html, send_email, message="Tests grouped by suites"), '')
+        reporting.handle_html_report(final_html, save_as_file=save_static_link,
+                                     message="Tests grouped by suites"), '')
 
 
 @baker.command
-def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, include_dir_names=True):
+def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, include_dir_names=True,
+                               save_static_link=False):
     """
     Locate all tests in repo that contain specified string and (optionally) generate a suite file
      from these tests
@@ -95,17 +98,19 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, inclu
                                  partial_test_name in test_key and partial_test_name in tests[0]['test_name'])
         if create_suite_file:
             suite_tests = '\n'.join(selected_tests)
-            file_path = reporting.save_to_file(f"{partial_test_name}_{int(time.time())}.suite",
-                                               suite_tests)
+            file_path = reporting.save_to_file(suite_tests,
+                                               f"{partial_test_name}_{int(time.time())}.suite")
             file_name = os.path.basename(file_path)
+        html_report = reporting.create_tests_list(selected_tests,
+                                                  f'{len(selected_tests)} tests were found matching "{partial_test_name}"')
+
         return COMMAND_OUTPUT(
-            reporting.create_tests_list(selected_tests,
-                                        f'{len(selected_tests)} tests were found matching "{partial_test_name}"'),
-            file_name)
+            reporting.handle_html_report(html_report, save_as_file=save_static_link), file_name)
 
 
 @baker.command
-def find_test_by_error(exception, with_jira_tickets=False, include_simulator=False, *send_email):
+def find_test_by_error(exception, with_jira_tickets=False, include_simulator=False,
+                       save_static_link=False):
     """
     1. Look for cache for entry with the specified exception type
     2. If entry found:
@@ -122,13 +127,13 @@ def find_test_by_error(exception, with_jira_tickets=False, include_simulator=Fal
                       include_simulator=include_simulator)
     html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
     html_text += reporting.create_tests_table(tests)
-    return COMMAND_OUTPUT(reporting.handle_html_report(html_text, send_email,
+    return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
                                         message=f"Results exception {exception}"), '')
 
 
 @baker.command
 def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
-                             include_simulator=False, *send_email):
+                             include_simulator=False, save_static_link=False):
     """
     1. Get all failed tests objects
     2. Create html table
@@ -138,19 +143,19 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     :type exception: str
     :type with_jira_tickets: bool
     :type include_simulator: bool
-    :type send_email: tuple
+    :type save_static_link: bool
     """
     tests = get_tests(test_name=test_name, error=exception,
                       status=config.failed_statuses,
                       with_jira_tickets=with_jira_tickets,
                       include_simulator=include_simulator)
     html_text = reporting.create_tests_table(tests)
-    return COMMAND_OUTPUT(reporting.handle_html_report(html_text, send_email,
+    return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
                                         message=f"Results for test {test_name}"), '')
 
 
 @baker.command
-def test_stats(test_name, include_simulator=False):
+def test_stats(test_name, include_simulator=False, save_static_link=False):
     """
     Get full summary of all test executions
     :type test_name: str
@@ -166,11 +171,14 @@ def test_stats(test_name, include_simulator=False):
             html_report += get_tests_stats(test_name, file_name, tests, test_details)
     else:
         html_report = f"<br><br> No tests were found by this name: {test_name}"
+    if save_static_link:
+        return COMMAND_OUTPUT(reporting.save_to_file(html_report), file_name='')
     return COMMAND_OUTPUT(html_report, '')
 
 
 @baker.command
-def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=False, *send_email):
+def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=False,
+                           save_static_link=False, *send_email):
     """
     1. Get latest sessions
     2. get all tests in the list
@@ -208,7 +216,8 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=Fal
     for test in failed_tests:
         update_errors()
     final_html = reporting.create_errors_table(test_and_errors, updated_failed_tests)
-    return COMMAND_OUTPUT(reporting.handle_html_report(final_html, send_email), '')
+    return COMMAND_OUTPUT(reporting.handle_html_report(final_html, save_as_file=save_static_link,
+                                                       send_email=send_email), '')
 
 
 if __name__ == '__main__':
