@@ -60,7 +60,8 @@ smtp_server = 'smtp-dev.lab.il.infinidat.com'
 
 ignore_branches = ["/", "cli"]
 
-omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED']
+omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED',
+               'sherlock_client.exc.ResourceLocked']
 
 generic_errors = ["AssertionError"]
 
