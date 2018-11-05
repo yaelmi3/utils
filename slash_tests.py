@@ -131,6 +131,7 @@ def get_latest_tests():
     if latest_tag:
         return get_from_cache(str(latest_tag))
 
+
 if __name__ == '__main__':
     log.init_log(log_file=False)
     baker.run()

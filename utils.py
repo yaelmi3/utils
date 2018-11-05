@@ -1,13 +1,15 @@
 import os
 import time
+import baker
 from collections import OrderedDict, namedtuple
 
-import baker
-
 import config
+import log
 import reporting
+from coverage import determine_flaky_tests, update_errors
 from elastic_search_queries import process_error
-from processing_tests import get_tests, get_ticket_status
+from jira_queries import get_ticket_status
+from processing_tests import get_tests
 from slash_tests import get_latest_tests
 from test_stats import get_related_tests_from_cache, divide_tests_by_filename, get_tests_stats
 
@@ -26,7 +28,58 @@ def _matches_requirements(test):
 
 
 def _get_test_blocker(test):
-    return test['tags'][test['tags'].index('jira-blocker') + 1]
+    if 'jira-blocker' in test['tags']:
+        return test['tags'][test['tags'].index('jira-blocker') + 1]
+    return ''
+
+
+@baker.command
+def coverage_by_version(version, include_simulator=False, save_static_link=False):
+    """
+    1. Get all tests executed on specific version
+    2. Get all tests from repo
+    3. Create copy of tests repo not_covred list
+    3. Iterate through all the tests
+        3.1 If test exists in repo, remove it form the not covered list
+        3.2 Based on the test result, add it to the test dict that separates success and faulire
+        3.3 Gather all errors in the tests
+    4 Determine flaky tests
+    5. Generate report
+    """
+    repo_tests = {key_name: tests for key_name, tests in get_latest_tests().items() if
+                      not key_name.startswith("tests/test_utils_tests")}
+
+    tests = get_tests(version=version, include_simulator=include_simulator,
+                      status=config.all_statuses)
+
+    executed_tests = {"SUCCESS": {},
+                      'ERROR': {},
+                      f"Last_{config.definite_executions_threshold}_SUCCESS": {},
+                      f"Last_{config.definite_executions_threshold}_ERROR": {}}
+    errors = {}
+    if tests and repo_tests:
+        not_covered = repo_tests.copy()
+        for index, test in enumerate(tests):
+            log.debug(f"{index} : {test.start_time}")
+            log.debug(test.test_name)
+            for test_key in repo_tests:
+                if test.test_name in test_key and test._file_name in test_key:
+                    if test_key in not_covered:
+                        not_covered.pop(test_key)
+                    if test_key in executed_tests[test._status]:
+                        executed_tests[test._status][test_key].append(test.start_time)
+                    else:
+                        executed_tests[test._status][test_key] = [test.start_time]
+                    update_errors(test, errors)
+        flaky_tests = determine_flaky_tests(executed_tests, repo_tests)
+        coverage_data = {'not_executed': [test_key for test_key, test_list in not_covered.items() if not _get_test_blocker(test_list[0])],
+                         'blocked': [test_key for test_key, test_list in not_covered.items() if _get_test_blocker(test_list[0])],
+                         'flaky': flaky_tests}
+        coverage_data.update(executed_tests)
+        html_text = reporting.create_coverage_report(header=f"Coverage for version {version}",
+                                                coverage_data=coverage_data, errors=errors)
+        return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
+                                                           message=f"Coverage for version {version}"), '')
 
 
 @baker.command
@@ -40,8 +93,8 @@ def show_jira_blockers(save_static_link=False):
     if tests:
         blocked_tests = {}
         for test_key, test_list in tests.items():
-            if 'jira-blocker' in test_list[0]['tags']:
-                test_blocker = _get_test_blocker(test_list[0])
+            test_blocker = _get_test_blocker(test_list[0])
+            if test_blocker:
                 status = get_ticket_status(test_blocker)
                 if status in blocked_tests:
                     blocked_tests[status].append(
@@ -125,10 +178,11 @@ def find_test_by_error(exception, with_jira_tickets=False, include_simulator=Fal
                       status=config.failed_statuses,
                       test_params=test_params,
                       include_simulator=include_simulator)
-    html_text = f"<b>{exception} - {len(tests)} tests</b><br>"
+    html_text = f"<b>{exception}:</b>"
     html_text += reporting.create_tests_table(tests)
     return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
                                         message=f"Results exception {exception}"), '')
+
 
 
 @baker.command
