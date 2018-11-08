@@ -78,7 +78,7 @@ def get_tests_query(**kwargs):
     tests_query = {"query": {"bool": {"must": [{"prefix": {"test.name": {"value": "test_"}}}],
                                       "must_not": [{"query_string": {
                                           "default_field": "errors.message",
-                                          "query": "KeyboardInterrupt OR bdb.BdbQuit OR ResourceLocked"}},
+                                          "query": "KeyboardInterrupt OR bdb.BdbQuit"}},
                                           {"range": {"num_interruptions": {"gte": 1}}},
         ]}},
         "sort": [{"_id": "desc"}, {"start_time": "asc"}]}
@@ -96,7 +96,6 @@ def get_tests_query(**kwargs):
         #tests_query['query']['bool']['must_not'].append({"match": {"subjects.version": "dev"}})
         tests_query['query']['bool']['must'].append({"match": {"session_metadata.Project": "infinibox_tests"}})
         tests_query['query']['bool']['must_not'].append({"prefix": {"test.file_name": "tests/test_utils_tests"}})
-    log.notice(str(tests_query).replace("'", '"'))
     return tests_query
 
 

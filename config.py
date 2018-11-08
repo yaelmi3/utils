@@ -1,3 +1,4 @@
+import pathlib
 from collections import namedtuple
 
 backslash_url = "https://backslash.infinidat.com/"
@@ -19,6 +20,13 @@ table_style = '<style type="text/css">table { table-layout:auto;width="100%"} .t
 log_name = "utils.log"
 
 cache_server_up = True
+
+
+def get_util_dir():
+    project_dir = pathlib.Path.home()/"automation_utils"
+    if not project_dir.exists():
+        project_dir.mkdir()
+    return str(project_dir)
 
 
 def get_cache_state():
@@ -80,9 +88,17 @@ test_link = '<a href="https://backslash.infinidat.com/#/tests/{0}">{0}</a>'
 
 tests_search_link = '<a href="https://backslash.infinidat.com/#/tests?search={0}">{0}</a>'
 
-webui_menus_index = {"Queries": ["obtain_all_test_errors", "test_stats", "get_failed_tests_by_name", "find_test_by_error"],
-                     "Reports": ["coverage_by_version", "suites_overview", "show_jira_blockers", "find_tests_by_name_in_repo"]}
+webui_menus_index = {"Queries": ["obtain_all_test_errors",
+                                 "test_stats",
+                                 "get_failed_tests_by_name",
+                                 "find_test_by_error"],
+                     "Reports": ["coverage_reports",
+                                 "coverage_by_version",
+                                 "suites_overview",
+                                 "show_jira_blockers",
+                                 "find_tests_by_name_in_repo"]}
 
+web_predefined_menus = {"Reports": {"coverage_reports": None}}
 webui_ignore_vararg_list = ["send_email"]
 
 
