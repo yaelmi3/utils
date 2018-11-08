@@ -54,9 +54,9 @@ def create_graph_bar(data, title='', sort=True):
     plot_bar_axes = _handle_plot_data(data, sort)
     data = {
         "data": [plotly.graph_objs.Bar(x=plot_bar_axes.x, y=plot_bar_axes.y)],
-        "layout": plotly.graph_objs.Layout(title=title, margin={"t": 0, 'b': 0, 'l': 80, 'r': 80},
+        "layout": plotly.graph_objs.Layout(title=title,
                                            xaxis={'tickangle': 45},
-                                           autosize=False)
+                                           autosize=True)
     }
     return plotly.offline.plot(data, output_type='div')
 
