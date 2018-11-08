@@ -189,10 +189,11 @@ def create_tests_table(tests, header=''):
                 [cell.format(value) for key, value in test.__dict__.items() if not key.startswith('_')])
             html_text += "</tr>"
         html_text += "</table>"
-        header += f"<b> {index + 1} tests</b><br>"
+        header += f"<b> {index + 1 if index > 1 else 0} tests</b><br>"
         return header + html_text
     log.error("Could not find tests that match the query")
     return ''
+
 
 
 def create_errors_table(test_and_errors, updated_failed_tests):
