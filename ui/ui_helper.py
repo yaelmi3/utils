@@ -46,7 +46,8 @@ def get_main_inputs():
         menu_name = _get_menu_name(func_name)
         if menu_name:
             all_commands[menu_name][func_name] = get_list_of_args(arguments)
-    return all_commands
+    return {category: {**config.web_predefined_menus.get(category, dict()), **content} for
+            category, content in all_commands.items()}
 
 
 def _get_menu_name(func_name):
@@ -114,3 +115,5 @@ def _eval_input(input_value):
         return literal_eval(input_value)
     except (ValueError, SyntaxError):
         return input_value
+
+

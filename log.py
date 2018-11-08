@@ -25,7 +25,7 @@ def silence_log_output():
     StreamHandler(sys.stdout, level="INFO").push_application()
 
 
-def init_log(log_file=True, file_path=None):
+def init_log(log_file=False, file_path=None):
     if log_file:
         file_path = os.path.join(_get_logs_dir(), config.log_name) if not file_path else file_path
         log_file_handler = FileHandler(file_path, format_string=log_format_string, bubble=True, mode='a')

@@ -1,6 +1,5 @@
-import os
+import pathlib
 import smtplib
-import tempfile
 import time
 from email import encoders
 from email.encoders import encode_base64
@@ -8,13 +7,15 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
+
 import dominate
 from bs4 import BeautifulSoup
 from dominate import tags
 
 import config
+import graphs
 import log
-from graphs import create_graph_bar, create_pie_chart, create_2_columns_table, create_generic_table
+from cache_client import update_cache, get_from_cache
 
 
 def generate_html_report(html, recipients, message):
@@ -135,11 +136,22 @@ def _get_table_headers(tests):
     return f"<tr>{headers}</tr>"
 
 
-def handle_html_report(final_html, send_email=None, save_as_file=False, message=None):
-    if send_email:
-        generate_html_report(final_html, send_email, message)
-    if save_as_file:
-        return save_to_file(final_html, f"tests_{time.time()}.html")
+def handle_html_report(final_html, **kwargs):
+    """
+    Supported kwargs: send_email, save_as_file, message, save_to_redis, file_name
+    :type final_html: str
+    :rtype: str
+    """
+    redis_key = kwargs.get("save_to_redis")
+
+    if kwargs.get("send_email"):
+        generate_html_report(final_html, kwargs.get("send_email"), kwargs.get("message"))
+    if kwargs.get("save_as_file"):
+        saved_file_path = save_to_file(final_html,
+                                       kwargs.get("file_name", f"tests_{time.time()}.html"))
+        if redis_key:
+            update_cache(redis_key, str(saved_file_path))
+        return str(saved_file_path)
     return final_html
 
 
@@ -149,8 +161,8 @@ def save_to_file(file_content, file_name=None):
     :type file_name: str
     :type file_content: str
     """
-    file_path = os.path.join(tempfile.gettempdir(),
-                             file_name) if file_name else f"{tempfile.NamedTemporaryFile(delete=False).name}.html"
+    file_path = pathlib.Path(config.get_util_dir()) / file_name if file_name else pathlib.Path(
+        config.get_util_dir()) / f"tests_{time.time()}.html"
     with open(file_path, 'w') as file_handle:
         file_handle.write(file_content)
         log.notice(f"File was created at: {file_path}")
@@ -194,7 +206,7 @@ def create_errors_table(test_and_errors, updated_failed_tests):
 
 def create_suites_table(tests_by_suites):
     html_text = f"{config.table_style} <h2>Tests grouped by suites</h2><br>"
-    html_text += create_graph_bar({key_name: len(members) for key_name, members in tests_by_suites.items()})
+    html_text += graphs.create_graph_bar({key_name: len(members) for key_name, members in tests_by_suites.items()})
     for suite_name, test_list in tests_by_suites.items():
         html_text += f"<h3 id={suite_name} tag={suite_name}>{suite_name} ({len(test_list)})</h3>"
         html_text += f"<table class='tg'> {''.join(['<tr>' + config.cell_style.format(test) + '</tr>' for test in test_list])}"
@@ -224,7 +236,7 @@ def create_test_stats_table(header, test_analysis, note):
 
 def create_test_blockers_table(test_blockers):
     html_text = f"<h2>Test Blockers - {sum(len(blockers) for blockers in test_blockers.values())}</h2><br>"
-    html_text += create_graph_bar({key_name: len(members) for key_name, members in test_blockers.items()})
+    html_text += graphs.create_graph_bar({key_name: len(members) for key_name, members in test_blockers.items()})
     for blocker_status, blocked_tests in test_blockers.items():
         html_text += f"<h3 id={blocker_status} tag={blocker_status}>{blocker_status} ({len(blocked_tests)})</h3>"
         html_text +=  f"{config.table_style}"
@@ -243,30 +255,30 @@ def create_coverage_report(header, coverage_data, errors):
     html_text = f"<h2>{header}</h2><br>"
     html_text += f"<h3 id=coverage tag=coverage>" \
                  f"Coverage: {calculate_coverage(coverage_data)}%</h3>"
-    html_text += create_pie_chart(
+    html_text += graphs.create_pie_chart(
         labels=[label_name.title() for label_name in coverage_data.keys()],
         values=[len(values) for values in coverage_data.values()])
 
     html_text += f"<h3 id=errors_ratio tag=errors_ratio>Total Errors</h3>"
-    html_text += create_2_columns_table(["Error Name", "Occurrences"], errors)
+    html_text += graphs.create_2_columns_table(["Error Name", "Occurrences"], errors)
 
     for key_name in ["flaky", "Last_10_SUCCESS", "Last_10_ERROR"]:
         if coverage_data[key_name]:
             html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
             updated_tests = _adjust_tests_to_table(coverage_data, key_name)
-            html_text += create_generic_table(["Test Name", "Success", "Failure"],
+            html_text += graphs.create_generic_table(["Test Name", "Success", "Failure"],
                                               [sub_data for sub_data in updated_tests],
                                               len(updated_tests[0]))
 
     for key_name in ['not_executed', 'blocked']:
         if coverage_data[key_name]:
             html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
-            html_text += create_generic_table(["Test Name"], [coverage_data[key_name]], len(coverage_data[key_name]))
+            html_text += graphs.create_generic_table(["Test Name"], [coverage_data[key_name]], len(coverage_data[key_name]))
 
     for key_name in ["SUCCESS", "ERROR"]:
         if coverage_data[key_name]:
             html_text += f"<h3 id={key_name} tests tag={key_name} tests>{key_name.title()}</h3>"
-            html_text += create_2_columns_table(["Test Name", "Occurrences"],
+            html_text += graphs.create_2_columns_table(["Test Name", "Occurrences"],
                                                 {test_name: len(tests) for test_name, tests in
                                                  coverage_data[key_name].items()})
 
@@ -278,8 +290,37 @@ def _adjust_tests_to_table(coverage_data, key_name):
                           [[status["SUCCESS"] for status in coverage_data[key_name].values()]] +\
                           [[status["FAILURE"] for status in coverage_data[key_name].values()]]
 
+
 def calculate_coverage(coverage_data):
     total = sum([len(values) for _, values in coverage_data.items()])
     executed = sum([len(values) for key_name, values in coverage_data.items() if
                     key_name != "not_executed" and key_name != "blocked"])
     return int(executed/total * 100)
+
+
+def get_saved_reports(key_name):
+    """
+    1. Get reports location from cache by specified key name
+    2. Go through the list and remove all file location that are not found
+    3. Sort files byb version and then by days ascending
+    :type key_name: str
+    :return:
+    """
+    list_of_report_paths = get_from_cache(key_name)
+    reports_by_ver = {}
+    if list_of_report_paths:
+        valid_reports = [pathlib.Path(report_path).name for report_path in list_of_report_paths if
+                         pathlib.Path(report_path).exists()]
+
+        for report in valid_reports:
+            version = report.split("__")[0]
+            if version in reports_by_ver:
+                reports_by_ver[version].append(report)
+            else:
+                reports_by_ver[version] = [report]
+    html_text = "<h2 Coverage Reports </h2>"
+    for version, reports in reports_by_ver.items():
+        html_text += f"<h3 id={version} tests tag={version} tests>{version.title().replace('_', '.')}</h3>"
+        for report in reports:
+            html_text += f'<a href="http://0.0.0.0:8080/display_file_link/{report}">{report}</a>'
+    return table_of_contents(html_text)

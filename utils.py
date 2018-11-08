@@ -1,7 +1,9 @@
 import os
 import time
-import baker
 from collections import OrderedDict, namedtuple
+
+import arrow
+import baker
 
 import config
 import log
@@ -34,7 +36,7 @@ def _get_test_blocker(test):
 
 
 @baker.command
-def coverage_by_version(version, include_simulator=False, save_static_link=False):
+def coverage_by_version(version, include_simulator=False, save_static_link=False, save_to_redis=None):
     """
     1. Get all tests executed on specific version
     2. Get all tests from repo
@@ -78,8 +80,13 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
         coverage_data.update(executed_tests)
         html_text = reporting.create_coverage_report(header=f"Coverage for version {version}",
                                                 coverage_data=coverage_data, errors=errors)
-        return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
-                                                           message=f"Coverage for version {version}"), '')
+        file_name = f"{version.replace('.', '_')}__coverage_report" \
+                    f"_{arrow.now().format('DD-MM-YY_HH-mm-ss')}.html"
+        return COMMAND_OUTPUT(reporting.handle_html_report(html_text,
+                                                           save_as_file=save_static_link,
+                                                           message=f"Coverage for version {version}",
+                                                           save_to_redis=save_to_redis,
+                                                           file_name=file_name), '')
 
 
 @baker.command
