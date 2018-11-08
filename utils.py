@@ -36,7 +36,7 @@ def _get_test_blocker(test):
 
 
 @baker.command
-def coverage_by_version(version, include_simulator=False, save_static_link=False, save_to_redis=None):
+def coverage_by_version(version, include_simulator=False, save_static_link=False, save_to_db=None):
     """
     1. Get all tests executed on specific version
     2. Get all tests from repo
@@ -82,10 +82,12 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
                                                 coverage_data=coverage_data, errors=errors)
         file_name = f"{version.replace('.', '_')}__coverage_report" \
                     f"_{arrow.now().format('DD-MM-YY_HH-mm-ss')}.html"
+        if save_to_db:
+            save_to_db = "coverage_reports"
         return COMMAND_OUTPUT(reporting.handle_html_report(html_text,
                                                            save_as_file=save_static_link,
                                                            message=f"Coverage for version {version}",
-                                                           save_to_redis=save_to_redis,
+                                                           save_to_redis=save_to_db,
                                                            file_name=file_name), '')
 
 

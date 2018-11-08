@@ -1,6 +1,7 @@
 import pathlib
 import smtplib
 import time
+import socket
 from email import encoders
 from email.encoders import encode_base64
 from email.mime.base import MIMEBase
@@ -304,23 +305,29 @@ def get_saved_reports(key_name):
     2. Go through the list and remove all file location that are not found
     3. Sort files byb version and then by days ascending
     :type key_name: str
-    :return:
+    :rtype: str
     """
     list_of_report_paths = get_from_cache(key_name)
-    reports_by_ver = {}
-    if list_of_report_paths:
-        valid_reports = [pathlib.Path(report_path).name for report_path in list_of_report_paths if
-                         pathlib.Path(report_path).exists()]
 
-        for report in valid_reports:
-            version = report.split("__")[0]
-            if version in reports_by_ver:
-                reports_by_ver[version].append(report)
-            else:
-                reports_by_ver[version] = [report]
-    html_text = "<h2 Coverage Reports </h2>"
-    for version, reports in reports_by_ver.items():
-        html_text += f"<h3 id={version} tests tag={version} tests>{version.title().replace('_', '.')}</h3>"
-        for report in reports:
-            html_text += f'<a href="http://0.0.0.0:8080/display_file_link/{report}">{report}</a>'
-    return table_of_contents(html_text)
+    if list_of_report_paths:
+        reports_by_ver = _get_reports_from_cache(list_of_report_paths)
+        html_text = "<h2 Coverage Reports </h2>"
+        for version, reports in reports_by_ver.items():
+            html_text += f"<h3 id={version} tests tag={version} tests>{version.title().replace('_', '.')}</h3>"
+            for report in reports:
+                html_text += f'<a href="http://{socket.getfqdn()}:8080/display_file_link/{report}">{report}</a>'
+        return table_of_contents(html_text)
+
+
+def _get_reports_from_cache(list_of_report_paths):
+    reports_by_ver = {}
+    valid_reports = [pathlib.Path(report_path).name for report_path in list_of_report_paths if
+                     pathlib.Path(report_path).exists()]
+
+    for report in valid_reports:
+        version = report.split("__")[0]
+        if version in reports_by_ver:
+            reports_by_ver[version].append(report)
+        else:
+            reports_by_ver[version] = [report]
+    return reports_by_ver
