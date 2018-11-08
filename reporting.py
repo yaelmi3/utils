@@ -314,8 +314,8 @@ def get_saved_reports(key_name):
         html_text = "<h2 Coverage Reports </h2>"
         for version, reports in reports_by_ver.items():
             html_text += f"<h3 id={version} tests tag={version} tests>{version.title().replace('_', '.')}</h3>"
-            for report in reports:
-                html_text += f'<a href="http://{socket.getfqdn()}:8080/display_file_link/{report}">{report}</a>'
+            for report in reversed(reports):
+                html_text += f'<a href="http://{socket.getfqdn()}:8080/display_file_link/{report}">{report}</a><br>'
         return table_of_contents(html_text)
 
 
