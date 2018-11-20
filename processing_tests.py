@@ -1,8 +1,11 @@
 import arrow
 
-import config
 from elastic_search_queries import ElasticSearch, InternalTest
 from jira_queries import get_jira_tickets
+
+
+def get_sorted_tests_list(**kwargs):
+    return _sort_tests([test for test in get_tests(**kwargs)])
 
 
 def get_tests(**kwargs):

@@ -11,7 +11,7 @@ import reporting
 from coverage import determine_flaky_tests, update_errors
 from elastic_search_queries import process_error
 from jira_queries import get_ticket_status
-from processing_tests import get_tests
+from processing_tests import get_tests, get_sorted_tests_list
 from slash_tests import get_latest_tests
 from test_stats import get_related_tests_from_cache, divide_tests_by_filename, get_tests_stats
 
@@ -182,16 +182,15 @@ def find_test_by_error(exception, with_jira_tickets=False, include_simulator=Fal
     :type include_simulator: bool
     """
     test_params = not with_jira_tickets
-    tests = get_tests(error=exception,
-                      with_jira_tickets=with_jira_tickets,
-                      status=config.failed_statuses,
-                      test_params=test_params,
-                      include_simulator=include_simulator)
+    tests = get_sorted_tests_list(error=exception,
+                                  with_jira_tickets=with_jira_tickets,
+                                  status=config.failed_statuses,
+                                  test_params=test_params,
+                                  include_simulator=include_simulator)
     html_text = f"<b>{exception}:</b>"
     html_text += reporting.create_tests_table(tests)
     return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
                                         message=f"Results exception {exception}"), '')
-
 
 
 @baker.command
@@ -208,13 +207,13 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     :type include_simulator: bool
     :type save_static_link: bool
     """
-    tests = get_tests(test_name=test_name, error=exception,
-                      status=config.failed_statuses,
-                      with_jira_tickets=with_jira_tickets,
-                      include_simulator=include_simulator)
+    tests = get_sorted_tests_list(test_name=test_name, error=exception,
+                                  status=config.failed_statuses,
+                                  with_jira_tickets=with_jira_tickets,
+                                  include_simulator=include_simulator)
     html_text = reporting.create_tests_table(tests)
     return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
-                                        message=f"Results for test {test_name}"), '')
+                                                       message=f"Results for test {test_name}"), '')
 
 
 @baker.command
@@ -226,8 +225,8 @@ def test_stats(test_name, include_simulator=False, save_static_link=False):
     """
     html_report = ''
     test_details = get_related_tests_from_cache(test_name)
-    queried_tests = get_tests(test_name=test_name, status=config.all_statuses,
-                              include_simulator=include_simulator)
+    queried_tests = get_sorted_tests_list(test_name=test_name, status=config.all_statuses,
+                                          include_simulator=include_simulator)
     if queried_tests:
         tests_by_file_name = divide_tests_by_filename(queried_tests)
         for file_name, tests in tests_by_file_name.items():
@@ -269,11 +268,11 @@ def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=Fal
                     test_and_errors[exception_type] = [test]
     test_and_errors = {}
     test_params = False if with_jira_tickets else True
-    all_tests = get_tests(days=days,
-                          status=config.failed_statuses,
-                          with_jira_tickets=with_jira_tickets,
-                          test_params=test_params,
-                          include_simulator=include_simulator)
+    all_tests = get_sorted_tests_list(days=days,
+                                      status=config.failed_statuses,
+                                      with_jira_tickets=with_jira_tickets,
+                                      test_params=test_params,
+                                      include_simulator=include_simulator)
     failed_tests = [test for test in all_tests if _matches_requirements(test)]
     updated_failed_tests = failed_tests
     for test in failed_tests:
