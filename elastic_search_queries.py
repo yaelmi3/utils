@@ -43,7 +43,6 @@ def _get_test_params(test_params, test_data):
         return {key: str(value) for key, value in params_dict.items()}
 
 
-
 def process_error(error, max_length=config.max_error_length):
     """
     1. Check whether there are errors is test
@@ -53,7 +52,8 @@ def process_error(error, max_length=config.max_error_length):
     """
     error_message = error['message']
     exception_type = error_message.split(":")[0]
-    return _truncate_text(exception_type, max_length)
+    display_error = exception_type.split('.')[-1]
+    return _truncate_text(display_error, max_length)
 
 
 def _truncate_text(exception_type, max_len):

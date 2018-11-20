@@ -48,6 +48,7 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
     4 Determine flaky tests
     5. Generate report
     """
+    version = version.strip()
     repo_tests = {key_name: tests for key_name, tests in get_latest_tests().items() if
                       not key_name.startswith("tests/test_utils_tests")}
 
@@ -150,6 +151,7 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, inclu
     Locate all tests in repo that contain specified string and (optionally) generate a suite file
      from these tests
     """
+    partial_test_name = partial_test_name.strip()
     tag_tests = get_latest_tests()
     file_name = ''
     if tag_tests:
@@ -171,27 +173,28 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, inclu
 
 
 @baker.command
-def find_test_by_error(exception, with_jira_tickets=False, include_simulator=False,
+def find_test_by_error(error_name, with_jira_tickets=False, include_simulator=False,
                        save_static_link=False):
     """
     1. Look for cache for entry with the specified exception type
     2. If entry found:
         2.1 Iterate through test id and obtain their test objects
-    :type exception: str
+    :type error_name: str
     :type send_email: str
     :type include_simulator: bool
     """
+    error_name = error_name.strip()
     test_params = not with_jira_tickets
-    tests = get_sorted_tests_list(error=exception,
+    tests = get_sorted_tests_list(error=error_name,
+
                                   with_jira_tickets=with_jira_tickets,
                                   status=config.failed_statuses,
                                   test_params=test_params,
                                   include_simulator=include_simulator)
-    html_text = f"<b>{exception}:</b>"
+    html_text = f"<b>{error_name}:</b>"
     html_text += reporting.create_tests_table(tests)
     return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
-                                        message=f"Results exception {exception}"), '')
-
+                                                       message=f"Results exception {error_name}"), '')
 
 @baker.command
 def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
@@ -207,6 +210,7 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     :type include_simulator: bool
     :type save_static_link: bool
     """
+    test_name = test_name.strip()
     tests = get_sorted_tests_list(test_name=test_name, error=exception,
                                   status=config.failed_statuses,
                                   with_jira_tickets=with_jira_tickets,
@@ -223,6 +227,7 @@ def test_stats(test_name, include_simulator=False, save_static_link=False):
     :type test_name: str
     :type include_simulator: bool
     """
+    test_name = test_name.strip()
     html_report = ''
     test_details = get_related_tests_from_cache(test_name)
     queried_tests = get_sorted_tests_list(test_name=test_name, status=config.all_statuses,
@@ -239,7 +244,7 @@ def test_stats(test_name, include_simulator=False, save_static_link=False):
 
 
 @baker.command
-def obtain_all_test_errors(days=1, with_jira_tickets=True, include_simulator=False,
+def obtain_all_test_errors(days=1, with_jira_tickets=False, include_simulator=False,
                            save_static_link=False, *send_email):
     """
     1. Get latest sessions
