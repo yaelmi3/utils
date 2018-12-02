@@ -35,6 +35,10 @@ def _get_test_blocker(test):
     return ''
 
 
+def _process_input(input):
+    return str(input).strip()
+
+
 @baker.command
 def coverage_by_version(version, include_simulator=False, save_static_link=False, save_to_db=None):
     """
@@ -48,7 +52,7 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
     4 Determine flaky tests
     5. Generate report
     """
-    version = version.strip()
+    version = _process_input(version)
     repo_tests = {key_name: tests for key_name, tests in get_latest_tests().items() if
                       not key_name.startswith("tests/test_utils_tests")}
 
@@ -151,7 +155,7 @@ def find_tests_by_name_in_repo(partial_test_name, create_suite_file=False, inclu
     Locate all tests in repo that contain specified string and (optionally) generate a suite file
      from these tests
     """
-    partial_test_name = partial_test_name.strip()
+    partial_test_name = _process_input(partial_test_name)
     tag_tests = get_latest_tests()
     file_name = ''
     if tag_tests:
@@ -183,7 +187,7 @@ def find_test_by_error(error_name, with_jira_tickets=False, include_simulator=Fa
     :type send_email: str
     :type include_simulator: bool
     """
-    error_name = error_name.strip()
+    error_name = _process_input(error_name)
     test_params = not with_jira_tickets
     tests = get_sorted_tests_list(error=error_name,
 
@@ -197,7 +201,7 @@ def find_test_by_error(error_name, with_jira_tickets=False, include_simulator=Fa
                                                        message=f"Results exception {error_name}"), '')
 
 @baker.command
-def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
+def get_failed_tests_by_name(test_name, error_name=None, with_jira_tickets=False,
                              include_simulator=False, save_static_link=False):
     """
     1. Get all failed tests objects
@@ -205,13 +209,14 @@ def get_failed_tests_by_name(test_name, exception=None, with_jira_tickets=False,
     3. Save html to file. if directory specified, file will be created in dir, otherwise tempdir
         is used by default
     :type test_name: str
-    :type exception: str
+    :type error_name: str
     :type with_jira_tickets: bool
     :type include_simulator: bool
     :type save_static_link: bool
     """
-    test_name = test_name.strip()
-    tests = get_sorted_tests_list(test_name=test_name, error=exception,
+    test_name = _process_input(test_name)
+    error_name = _process_input(error_name)
+    tests = get_sorted_tests_list(test_name=test_name, error=error_name,
                                   status=config.failed_statuses,
                                   with_jira_tickets=with_jira_tickets,
                                   include_simulator=include_simulator)
@@ -227,7 +232,7 @@ def test_stats(test_name, include_simulator=False, save_static_link=False):
     :type test_name: str
     :type include_simulator: bool
     """
-    test_name = test_name.strip()
+    test_name = _process_input(test_name)
     html_report = ''
     test_details = get_related_tests_from_cache(test_name)
     queried_tests = get_sorted_tests_list(test_name=test_name, status=config.all_statuses,
