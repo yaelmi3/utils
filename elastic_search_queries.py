@@ -75,13 +75,20 @@ def get_tests_query(**kwargs):
                       'status': Query('terms', 'status'),
                       'version': Query('prefix', "subjects.version")
                       }
-    tests_query = {"query": {"bool": {"must": [{"prefix": {"test.name": {"value": "test_"}}}],
-                                      "must_not": [{"query_string": {
-                                          "default_field": "errors.message",
-                                          "query": "KeyboardInterrupt OR bdb.BdbQuit"}},
-                                          {"range": {"num_interruptions": {"gte": 1}}},
-        ]}},
+    tests_query = {"query":
+        {"bool":
+            {
+                "must": [
+                    {"prefix": {"test.name": {"value": "test_"}}},
+                ],
+                "must_not": [
+                    {"query_string": {
+                        "default_field": "errors.message",
+                        "query": "KeyboardInterrupt OR bdb.BdbQuit"}},
+                    {"range": {"num_interruptions": {"gte": 1}}},
+                ]}},
         "sort": [{"_id": "desc"}, {"start_time": "asc"}]}
+
     for query, query_value in supported_keys.items():
         if query in kwargs and kwargs[query] is not None:
             if query == "days":
@@ -92,7 +99,7 @@ def get_tests_query(**kwargs):
                 {query_value.operation: {query_value.field: search_value}})
     if kwargs.get("include_simulator") is False:
         tests_query['query']['bool']['must_not'].append({"match": {"subjects.name": "simulator_1"}})
-    if kwargs.get('version'):
+    if kwargs.get('coverage'):
         #tests_query['query']['bool']['must_not'].append({"match": {"subjects.version": "dev"}})
         tests_query['query']['bool']['must'].append({"match": {"session_metadata.Project": "infinibox_tests"}})
         tests_query['query']['bool']['must_not'].append({"prefix": {"test.file_name": "tests/test_utils_tests"}})
@@ -133,7 +140,6 @@ class ElasticSearch(object):
             returned_results.extend(new_results)
             query["search_after"] = new_results[-1]["sort"]
             log.info(f"{len(returned_results)} out of {total_results}")
-
 
 
     def _scroll_pages(self, total_results, returned_results, query):

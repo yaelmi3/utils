@@ -53,7 +53,7 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
                       not key_name.startswith("tests/test_utils_tests")}
 
     tests = get_tests(version=version, include_simulator=include_simulator,
-                      status=config.all_statuses)
+                      status=config.all_statuses, coverage=True)
 
     executed_tests = {"SUCCESS": {},
                       'ERROR': {},

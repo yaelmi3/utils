@@ -1,11 +1,28 @@
 import arrow
 
+import config
 from elastic_search_queries import ElasticSearch, InternalTest
 from jira_queries import get_jira_tickets
 
 
 def get_sorted_tests_list(**kwargs):
     return _sort_tests([test for test in get_tests(**kwargs)])
+
+
+def _project_is_automation(test):
+    """
+    Return True:
+        1. If project is specified in the session metadata as required - for new infra tests
+        2. In case infinitest-version is among session metadata keys - for old infra tests
+        3. if the word suite appears in the commandline, but the project isn't specified - this is
+            for suite executions where the project isn't specified
+    :type test: dict
+    :rtype: bool
+    """
+    session_metadata = test['_source']['session_metadata']
+    return (session_metadata.get("Project") and session_metadata["Project"] in config.auto_projects) \
+            or 'infinitest-version' in session_metadata \
+            or "suite" in session_metadata['slash::commandline'] and not session_metadata.get("Project")
 
 
 def get_tests(**kwargs):
@@ -17,7 +34,7 @@ def get_tests(**kwargs):
         repetitions
     """
 
-    def test_should_be_added(test):
+    def test_should_be_added(test, coverage):
         """
         Test should be added to the list under the following conditions:
         1. If we need the tests with their params, all the tests will be added, hence return True
@@ -28,13 +45,15 @@ def get_tests(**kwargs):
         :type test: dict
         :rtype: bool
         """
-        if test_params:
-            return True
-        test_full_name = f"{test['_source']['test']['file_name']}:{test['_source']['test']['name']}"
-        status = test['_source']['status']
-        if test_full_name not in test_names or status != test_names[test_full_name]:
-            test_names.update({test_full_name: status})
-            return True
+        if coverage or _project_is_automation(test):
+            if test_params:
+                return True
+
+            test_full_name = f"{test['_source']['test']['file_name']}:{test['_source']['test']['name']}"
+            status = test['_source']['status']
+            if test_full_name not in test_names or status != test_names[test_full_name]:
+                test_names.update({test_full_name: status})
+                return True
 
     elastic_search = ElasticSearch()
     meta_tests = elastic_search.get_test_results(**kwargs)
@@ -42,7 +61,7 @@ def get_tests(**kwargs):
     test_params = kwargs.get('test_params', True)
     test_names = {}
     for meta_test in meta_tests:
-        if test_should_be_added(meta_test):
+        if test_should_be_added(meta_test, kwargs.get("coverage")):
             yield InternalTest(meta_test, test_params=test_params, jira_tickets=with_jira_tickets)
 
 

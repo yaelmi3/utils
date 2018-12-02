@@ -73,6 +73,8 @@ ignore_branches = ["/", "cli"]
 omit_errors = ["KeyboardInterrupt", 'bdb.BdbQuit', 'TEST_INTERRUPTED',
                'sherlock_client.exc.ResourceLocked']
 
+auto_projects = ["infinibox_tests"]
+
 generic_errors = ["AssertionError"]
 
 jira_query = 'updated > -365d' \
