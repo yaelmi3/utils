@@ -16,7 +16,7 @@ class InternalTest(object):
         self._id = test_data["logical_id"]
         self.test_link = config.test_link.format(self._id)
         self.test_name = test_data['test']['name']
-        self._file_name = test_data['test']['file_name']
+        self.test_module = test_data['test']['file_name']
         self.parameters = _get_test_params(test_params, test_data)
         self.first_error = _truncate_text(test_data['errors'][0]['message'], 120) if test_data[
             'errors'] else ''
