@@ -21,8 +21,9 @@ def _project_is_automation(test):
     """
     session_metadata = test['_source']['session_metadata']
     return (session_metadata.get("Project") and session_metadata["Project"] in config.auto_projects) \
-            or 'infinitest-version' in session_metadata \
-            or "suite" in session_metadata['slash::commandline'] and not session_metadata.get("Project")
+           or 'infinitest-version' in session_metadata \
+           or ('slash::commandline' in session_metadata and "suite" in session_metadata['slash::commandline']) \
+           and not session_metadata.get("Project")
 
 
 def get_tests(**kwargs):
