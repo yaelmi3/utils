@@ -1,4 +1,3 @@
-import pickle
 import sys
 from datetime import timedelta
 
@@ -57,7 +56,6 @@ class CacheServer(rpyc.Service):
 
 if __name__ == "__main__":
     StreamHandler(sys.stdout).push_application()
-    baker.run()
     log.info(f"Starting Lab cache server on port {REDIS_PORT}")
     t = ThreadedServer(CacheServer, port=REDIS_PORT)
     t.daemon = True

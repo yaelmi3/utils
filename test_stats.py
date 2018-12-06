@@ -36,10 +36,10 @@ def divide_tests_by_filename(tests):
     """
     tests_by_path = {}
     for test in tests:
-        if test._file_name in tests_by_path:
-            tests_by_path[test._file_name].append(test)
+        if test.test_module in tests_by_path:
+            tests_by_path[test.test_module].append(test)
         else:
-            tests_by_path[test._file_name] = [test]
+            tests_by_path[test.test_module] = [test]
     return tests_by_path
 
 

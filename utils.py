@@ -70,7 +70,7 @@ def coverage_by_version(version, include_simulator=False, save_static_link=False
             log.debug(f"{index} : {test.start_time}")
             log.debug(test.test_name)
             for test_key in repo_tests:
-                if test.test_name in test_key and test._file_name in test_key:
+                if test.test_name in test_key and test.test_module in test_key:
                     if test_key in not_covered:
                         not_covered.pop(test_key)
                     if test_key in executed_tests[test._status]:
