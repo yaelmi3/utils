@@ -1,7 +1,6 @@
 import sys
 from datetime import timedelta
 
-import baker
 import redis
 import rpyc
 from logbook import Logger, StreamHandler
@@ -15,7 +14,7 @@ class CacheServer(rpyc.Service):
     def __init__(self, *args):
         self.r_server = redis.Redis()
 
-    def on_connect(self):
+    def on_connect(self, *_):
         log.info("Remote connection accepted")
 
     def exposed_add_to_cache(self, key_name, data, days_to_keep=None):

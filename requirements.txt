@@ -4,7 +4,7 @@ backslash
 logbook
 urlobject
 flask
-rpyc==3.4.4
+rpyc
 redis
 arrow
 pytest
@@ -12,9 +12,11 @@ bs4
 dominate
 lxml
 ipython
-ecosystem
 cachetools
 gunicorn
 gevent
 plotly
 colorlover
+GitPython
+pendulum
+ecosystem
