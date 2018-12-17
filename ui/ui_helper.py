@@ -84,28 +84,28 @@ def obtain_util_commands():
 def execute_command(request_form):
     function_name = {v: k for k, v in request_form.items()}.get('Submit')
     function_arguments = utils.baker._baker.commands[function_name]
-    args = get_args(function_arguments, request_form.to_dict())
+    args_ = get_args(function_arguments, request_form.to_dict())
     if hasattr(utils, function_name):
-        result = getattr(utils, function_name)(*args.arguments, *args.vargs)
+        result = getattr(utils, function_name)(*args_.arguments, *args_.vargs)
         return result
 
 
 def get_args(function_arguments, form_input):
     Args = namedtuple('Args', 'arguments vargs')
-    args = Args([], [])
+    args_ = Args([], [])
     for argument_name in function_arguments.argnames:
         if argument_name in form_input:
-            args.arguments.append(_eval_input(form_input.get(argument_name)))
+            args_.arguments.append(_eval_input(form_input.get(argument_name)))
         else:
             # In case the argument is not in the function argnames, it means its value is False and
             # and while it isn't listed in the form, we still need to pass it with it's arg, in this
             # case as False
-            args.arguments.append(False)
+            args_.arguments.append(False)
     if function_arguments.has_varargs:
         varargs = _eval_input(form_input.get(function_arguments.varargs_name))
         if varargs is not None:
-            args.vargs.append(varargs)
-    return args
+            args_.vargs.append(varargs)
+    return args_
 
 
 def _eval_input(input_value):

@@ -36,7 +36,7 @@ def _get_test_blocker(test):
 
 
 def _process_input(input):
-    return str(input).strip()
+    return str(input).strip() if input is not None else input
 
 
 @baker.command
