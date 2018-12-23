@@ -1,8 +1,9 @@
 import os
 from collections import OrderedDict
+from pathlib import Path
 
 from flask import Flask
-from flask import request, render_template, redirect, send_from_directory, jsonify
+from flask import render_template, redirect, send_from_directory, request, jsonify
 
 import config
 import log
@@ -63,8 +64,10 @@ def download(filename):
 
 @app.route('/get_automerger_errors/<jenkins_job>', methods=['GET', 'POST'])
 def get_automerger_errors(jenkins_job):
-    return jsonify(link=obtain_errors_by_jenkins_build(
-        jenkins_url=f"http://ci.infinidat.com/job/automerger_tests/{jenkins_job}/").html)
+    report_path = obtain_errors_by_jenkins_build(
+        jenkins_url=f"http://ci.infinidat.com/job/automerger_tests/{jenkins_job}/").html
+    link = f"{request.url_root}display_file_link/" + Path(report_path).name
+    return jsonify(link=link)
 
 
 if __name__ == '__main__':
