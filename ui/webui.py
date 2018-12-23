@@ -1,13 +1,14 @@
 import os
-from flask import Flask
 from collections import OrderedDict
-from flask import request, render_template, redirect, send_from_directory
+
+from flask import Flask
+from flask import request, render_template, redirect, send_from_directory, jsonify
 
 import config
 import log
-from ui.ui_helper import get_main_inputs, execute_command
 from reporting import get_saved_reports
-
+from ui.ui_helper import get_main_inputs, execute_command
+from utils import obtain_errors_by_jenkins_build
 
 app = Flask(__name__)
 log.init_log()
@@ -58,6 +59,12 @@ def display_file_link(file_name):
 @app.route('/uploads/<path:filename>', methods=['GET', 'POST'])
 def download(filename):
     return send_from_directory(directory=app.config['UPLOAD_FOLDER'], filename=filename)
+
+
+@app.route('/get_automerger_errors/<jenkins_job>', methods=['GET', 'POST'])
+def get_automerger_errors(jenkins_job):
+    return jsonify(link=obtain_errors_by_jenkins_build(
+        jenkins_url=f"http://ci.infinidat.com/job/automerger_tests/{jenkins_job}/").html)
 
 
 if __name__ == '__main__':

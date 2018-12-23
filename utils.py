@@ -292,5 +292,13 @@ def obtain_all_test_errors(days=1, with_jira_tickets=False, include_simulator=Fa
                                                        send_email=send_email), '')
 
 
+@baker.command
+def obtain_errors_by_jenkins_build(jenkins_url, save_static_link=True):
+    failed_tests = get_sorted_tests_list(jenkins_build=jenkins_url, status=config.failed_statuses)
+    html_text = reporting.create_tests_table(failed_tests)
+    return COMMAND_OUTPUT(reporting.handle_html_report(html_text, save_as_file=save_static_link,
+                                                       message=f"Failed tests for {jenkins_url}"), '')
+
+
 if __name__ == '__main__':
     baker.run()
