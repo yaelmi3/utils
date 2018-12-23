@@ -3,6 +3,8 @@ from collections import namedtuple
 
 backslash_url = "https://backslash.infinidat.com/"
 
+automerger_path = "http://ci.infinidat.com/job/automerger_tests"
+
 session_query_template = 'https://backslash.infinidat.com/rest/sessions?page_size' \
                  '=2000&start_time=gt%3A{}&show_abandoned=false&show_skipped=false'
 
