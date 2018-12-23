@@ -7,9 +7,9 @@ from flask import render_template, redirect, send_from_directory, request, jsoni
 
 import config
 import log
-from reporting import get_saved_reports
+from reporting import get_saved_reports, create_tests_table, handle_html_report
 from ui.ui_helper import get_main_inputs, execute_command
-from utils import obtain_errors_by_jenkins_build
+from processing_tests import get_sorted_tests_list
 
 app = Flask(__name__)
 log.init_log()
@@ -64,10 +64,14 @@ def download(filename):
 
 @app.route('/get_automerger_errors/<jenkins_job>', methods=['GET', 'POST'])
 def get_automerger_errors(jenkins_job):
-    report_path = obtain_errors_by_jenkins_build(
-        jenkins_url=f"http://ci.infinidat.com/job/automerger_tests/{jenkins_job}/").html
+    failed_tests = get_sorted_tests_list(jenkins_build=f"{config.automerger_path}/{jenkins_job}/",
+                                         status=config.failed_statuses)
+    html_text = create_tests_table(failed_tests)
+    report_path = handle_html_report(html_text, save_as_file=True,
+                       message=f"Failed tests for {config.automerger_path}/{jenkins_job}")
     link = f"{request.url_root}display_file_link/" + Path(report_path).name
-    return jsonify(link=link)
+    failed_tests_for_execution = set(f"{test.test_module}:{test.test_name}" for test in failed_tests)
+    return jsonify(link=link, num_of_tests=len(failed_tests), test_list=list(failed_tests_for_execution))
 
 
 if __name__ == '__main__':
