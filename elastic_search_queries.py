@@ -73,7 +73,8 @@ def get_tests_query(**kwargs):
                       'error': Query("match_phrase", "errors.message"),
                       'days': Query("range", "updated_at"),
                       'status': Query('terms', 'status'),
-                      'version': Query('prefix', "subjects.version")
+                      'version': Query('prefix', "subjects.version"),
+                      'jenkins_build': Query("match_phrase", "session_metadata.Build URL"),
                       }
     tests_query = {"query":
         {"bool":
