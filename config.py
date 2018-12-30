@@ -52,7 +52,7 @@ table_footer = "</table>"
 
 cache_server = namedtuple('cacheserver', ['url', 'port'])( "yaelm-freddy.lab.gdc.il.infinidat.com", 6378)
 
-elastic_server_url = 'http://infra-elastic-search:9200/backslash/_search'
+elastic_server_url = 'http://infra-elastic-search.lab.gdc.il.infinidat.com:9200/backslash/_search'
 
 page_scroll_format = "?scroll={}m"
 
